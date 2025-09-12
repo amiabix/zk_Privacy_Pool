@@ -1,121 +1,112 @@
 # Privacy Pool
 
-A privacy-preserving mixing pool implementation using Noir zero-knowledge proofs. This project allows users to deposit and withdraw funds while maintaining transaction privacy through cryptographic commitments and Merkle tree proofs.
+A privacy-preserving mixing pool implementation with both Noir and ZisK zkVM versions. This project demonstrates UTXO-based transaction privacy through cryptographic commitments and Merkle tree proofs.
 
 <img src="./web-app/public/image.png" width="700px">
 
+## Implementation Overview
+
+This repository contains two implementations:
+
+1. **Original Noir Version** (`src/main.nr`, `web-app/`, `scripts/`): Single-user privacy pool using Noir circuits
+2. **ZisK zkVM Version** (`privacy-pool-zkvm/`): Multi-user UTXO-based privacy pool running in ZisK zkVM
+
 ## How It Works
 
-Privacy Pool operates on the principle of **commitment schemes** and **zero-knowledge proofs** to break the link between deposits and withdrawals:
+The privacy pool uses **commitment schemes** and **zero-knowledge proofs** to break the link between deposits and withdrawals:
 
-1. **Deposit**: When users deposit funds, they generate a secret commitment that represents their deposit without revealing the amount or their identity.
-
-2. **Merkle Tree**: All commitments are stored in a binary Merkle tree, creating a cryptographic structure that allows proving membership without revealing which specific commitment belongs to whom.
-
-3. **Withdrawal**: To withdraw funds, users generate a zero-knowledge proof that demonstrates:
-   - They know the secret to a valid commitment in the tree
-   - They haven't already spent this commitment (nullifier mechanism)
-   - The withdrawal amount is valid
-
-4. **Privacy**: Since the proof doesn't reveal which commitment is being spent, withdrawals are unlinkable to deposits, providing transaction privacy.
+1. **Deposit**: Users deposit funds by creating UTXOs with secret commitments
+2. **Merkle Tree**: All UTXO commitments are stored in a Merkle tree for efficient membership proofs
+3. **Withdrawal**: Users generate zero-knowledge proofs demonstrating:
+   - Knowledge of a valid UTXO commitment
+   - No double-spending (nullifier mechanism)
+   - Valid withdrawal amount
+4. **Privacy**: Withdrawals are unlinkable to deposits through ZK proofs
 
 ## Getting Started
 
-### Prerequisites
-- [Bun](https://bun.sh) (latest version)
-- [Node.js](https://nodejs.org) (v18 or higher)
+### ZisK zkVM Version (Recommended)
 
-### Running the Web Application Locally
+The ZisK implementation provides multi-user support and UTXO-based transactions:
 
-1. **Clone the repository:**
+1. **Prerequisites:**
+   - [Rust](https://rustup.rs/) (latest stable)
+   - [ZisK](https://0xpolygonhermez.github.io/zisk/) installed
+
+2. **Build and test:**
    ```bash
-   git clone <repository-url>
-   cd privacy_pool
+   cd privacy-pool-zkvm
+   cargo-zisk build
+   cargo run --bin simple_test
+   ./run_test.sh
    ```
 
-2. **Install dependencies:**
+3. **Generate ZK proof:**
    ```bash
-   # Install root dependencies
+   cargo-zisk prove -e target/riscv64ima-zisk-zkvm-elf/release/privacy-pool-zkvm -i build/input.bin -o proof -a -y
+   ```
+
+### Original Noir Version
+
+1. **Prerequisites:**
+   - [Bun](https://bun.sh) (latest version)
+   - [Node.js](https://nodejs.org) (v18 or higher)
+
+2. **Run web application:**
+   ```bash
+   # Install dependencies
    bun install
+   cd web-app && bun install
    
-   # Install web-app dependencies
-   cd web-app
-   bun install
-   ```
-
-3. **Start the development server:**
-   ```bash
-   # From the web-app directory
+   # Start development server
    bun run dev
    ```
 
-4. **Open your browser:**
-   Navigate to `http://localhost:5173` to access the Privacy Pool interface.
-
-### Using the CLI Scripts
-
-From the root directory, you can use the following commands:
-
-```bash
-# Initialize the system
-bun run init
-
-# Make a deposit
-bun run deposit
-
-# Make a withdrawal
-bun run withdraw
-
-# Generate a proof
-bun run gen-proof
-
-# Get latest note information
-bun run get-latest-note
-```
+3. **CLI scripts:**
+   ```bash
+   bun run init      # Initialize system
+   bun run deposit   # Make deposit
+   bun run withdraw  # Make withdrawal
+   bun run gen-proof # Generate proof
+   ```
 
 ## Project Components
 
-### Core Circuit (`src/main.nr`)
-The Noir circuit that handles the zero-knowledge proof generation and verification:
-- **Hash Function**: Uses SHA-256 compression for creating commitments
-- **Merkle Proof Verification**: Validates that a commitment exists in the tree
-- **Nullifier System**: Prevents double-spending of commitments
+### ZisK zkVM Implementation (`privacy-pool-zkvm/`)
 
-### CLI Scripts (`scripts/`)
-Command-line tools for interacting with the privacy pool:
+**Core Components:**
+- **`src/main.rs`**: ZisK entry point for transaction processing
+- **`src/privacy_pool.rs`**: Multi-user privacy pool logic with UTXO management
+- **`src/utxo.rs`**: UTXO data structures and transaction types
+- **`src/merkle_tree.rs`**: Merkle tree implementation for commitment storage
+- **`src/zk_proofs.rs`**: Zero-knowledge proof generation and verification
 
-#### Core Scripts
-- **`init.ts`**: Initializes the privacy pool system and storage
-- **`deposit.ts`**: Handles deposit operations and commitment generation
-- **`withdraw.ts`**: Processes withdrawal requests with proof generation
-- **`gen_proof.ts`**: Generates zero-knowledge proofs for withdrawals
-- **`get_latest_note.ts`**: Retrieves the user's current note information
-- **`gen_input.ts`**: Generates input data for proof generation
+**Test Components:**
+- **`src/simple_test.rs`**: Basic deposit transaction test
+- **`src/create_multi_user_test.rs`**: Multi-user scenario test
+- **`run_test.sh`**: Automated build and test script
 
-#### Library Components (`scripts/lib/`)
-- **`constants.ts`**: System configuration (tree depth, zero values, etc.)
-- **`storage.ts`**: Persistent storage management for notes and tree state
-- **`index.ts`**: Utility functions and common operations
-- **`types.ts`**: TypeScript type definitions for notes and commitments
+**Generated Files:**
+- **`build/input.bin`**: Serialized transaction data for ZisK
+- **`proof/`**: Generated ZK proofs and verification results
 
-### Web Application (`web-app/`)
-A React-based user interface for interacting with the privacy pool:
+### Original Noir Implementation
 
-#### Frontend Components
-- **`BankingInterface.tsx`**: Main interface for deposits, withdrawals, and balance management
-- **`ui/`**: Reusable UI components (buttons, cards, inputs, etc.)
-- **`pages/`**: Application pages and routing
+**Core Circuit (`src/main.nr`):**
+- Single-user privacy pool using Noir circuits
+- SHA-256 compression for commitments
+- Merkle proof verification
+- Nullifier system for double-spend prevention
 
-#### Frontend Libraries
-- **`storage.ts`**: Browser-side storage management
-- **`types.ts`**: Frontend type definitions
-- **`utils.ts`**: Utility functions including proof generation
-- **`constants.ts`**: Frontend configuration constants
+**CLI Scripts (`scripts/`):**
+- `init.ts`, `deposit.ts`, `withdraw.ts`: Core transaction operations
+- `gen_proof.ts`, `get_latest_note.ts`: Proof generation and retrieval
+- `lib/`: Storage management and utility functions
 
-### Configuration Files
-- **`Nargo.toml`**: Noir project configuration and dependencies
-- **`package.json`**: Node.js dependencies and scripts
-- **`Prover.toml`**: Proof generation parameters and test data
+**Web Application (`web-app/`):**
+- React-based UI for transaction management
+- `BankingInterface.tsx`: Main transaction interface
+- `ui/`: Reusable UI components
 
 ## Architecture
 
@@ -143,23 +134,32 @@ A React-based user interface for interacting with the privacy pool:
 
 ## Key Features
 
-- **Privacy-Preserving**: Transactions are unlinkable through zero-knowledge proofs
-- **Commitment Scheme**: Deposits are represented as cryptographic commitments
-- **Merkle Tree**: Efficient membership proofs for large commitment sets
-- **Nullifier System**: Prevents double-spending of commitments
-- **Dual Interface**: Both CLI and web-based interfaces available
-- **Partial Withdrawals**: Support for withdrawing portions of deposited amounts
-- **Real-time UI**: Live updates for balances and transaction history
+**ZisK zkVM Version:**
+- **Multi-user Support**: Multiple users can interact with the same pool
+- **UTXO Model**: Bitcoin-style transaction model with unspent outputs
+- **Merkle Tree State**: Shared state tree for all UTXO commitments
+- **ZK Proof Generation**: Generates and verifies zero-knowledge proofs
+- **Test Suite**: Automated testing with multiple transaction scenarios
+
+**Original Noir Version:**
+- **Single-user Privacy**: Basic privacy pool functionality
+- **Web Interface**: React-based user interface
+- **CLI Tools**: Command-line scripts for transactions
+- **Commitment Scheme**: Cryptographic commitments for deposits
 
 ## Technology Stack
 
-- **Noir**: Zero-knowledge proof system for privacy-preserving computations
-- **TypeScript**: Type-safe development environment
-- **React**: Frontend user interface framework
-- **Bun**: Fast JavaScript runtime and package manager
-- **Tailwind CSS**: Utility-first CSS framework
-- **Poseidon**: Cryptographic hash function optimized for ZK circuits
-- **BB.js**: Aztec's proving system for generating proofs
+**ZisK Implementation:**
+- **Rust**: System programming language
+- **ZisK**: Zero-knowledge virtual machine
+- **SHA-256**: Cryptographic hash function
+- **Merkle Trees**: Efficient commitment storage
+
+**Original Implementation:**
+- **Noir**: Zero-knowledge proof system
+- **TypeScript/React**: Frontend development
+- **Bun**: JavaScript runtime
+- **Poseidon**: ZK-optimized hash function
 
 ## Security Considerations
 
@@ -171,11 +171,13 @@ A React-based user interface for interacting with the privacy pool:
 
 ## Development Status
 
-This is a demonstration project (v0.1) showcasing privacy pool concepts using Noir. The system maintains separate account and pool balances with a retro terminal-style interface for an engaging user experience.
+This project demonstrates privacy pool concepts with two implementations:
+- **ZisK Version**: Multi-user UTXO-based privacy pool with working ZK proofs
+- **Noir Version**: Single-user privacy pool with web interface
 
 ## ⚠️ Important Notice
 
-**This code is experimental and unaudited. It is intended for educational and research purposes only. Do not use this code in production environments or with real funds. The implementation may contain bugs, security vulnerabilities, or other issues that could result in loss of funds or privacy breaches.**
+**This code is experimental and unaudited. It is intended for educational and research purposes only. Do not use this code in production environments or with real funds.**
 
 ## Credits
 

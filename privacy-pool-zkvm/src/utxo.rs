@@ -39,11 +39,110 @@ impl UTXO {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct UTXOInput {
     pub utxo: UTXO,
     pub merkle_proof: MerkleProof,
     pub secret: [u8; 32], // Private key to spend
+    pub signature: [u8; 64], // Transaction signature
+}
+
+impl serde::Serialize for UTXOInput {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut state = serializer.serialize_struct("UTXOInput", 4)?;
+        state.serialize_field("utxo", &self.utxo)?;
+        state.serialize_field("merkle_proof", &self.merkle_proof)?;
+        state.serialize_field("secret", &self.secret)?;
+        state.serialize_field("signature", &self.signature.to_vec())?;
+        state.end()
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for UTXOInput {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
+        use std::fmt;
+
+        struct UTXOInputVisitor;
+
+        impl<'de> Visitor<'de> for UTXOInputVisitor {
+            type Value = UTXOInput;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct UTXOInput")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<UTXOInput, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut utxo = None;
+                let mut merkle_proof = None;
+                let mut secret = None;
+                let mut signature = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        "utxo" => {
+                            if utxo.is_some() {
+                                return Err(de::Error::duplicate_field("utxo"));
+                            }
+                            utxo = Some(map.next_value()?);
+                        }
+                        "merkle_proof" => {
+                            if merkle_proof.is_some() {
+                                return Err(de::Error::duplicate_field("merkle_proof"));
+                            }
+                            merkle_proof = Some(map.next_value()?);
+                        }
+                        "secret" => {
+                            if secret.is_some() {
+                                return Err(de::Error::duplicate_field("secret"));
+                            }
+                            secret = Some(map.next_value()?);
+                        }
+                        "signature" => {
+                            if signature.is_some() {
+                                return Err(de::Error::duplicate_field("signature"));
+                            }
+                            let sig_vec: Vec<u8> = map.next_value()?;
+                            if sig_vec.len() != 64 {
+                                return Err(de::Error::invalid_length(sig_vec.len(), &"64"));
+                            }
+                            let mut sig_array = [0u8; 64];
+                            sig_array.copy_from_slice(&sig_vec);
+                            signature = Some(sig_array);
+                        }
+                        _ => {
+                            let _ = map.next_value::<de::IgnoredAny>()?;
+                        }
+                    }
+                }
+
+                let utxo = utxo.ok_or_else(|| de::Error::missing_field("utxo"))?;
+                let merkle_proof = merkle_proof.ok_or_else(|| de::Error::missing_field("merkle_proof"))?;
+                let secret = secret.ok_or_else(|| de::Error::missing_field("secret"))?;
+                let signature = signature.ok_or_else(|| de::Error::missing_field("signature"))?;
+
+                Ok(UTXOInput {
+                    utxo,
+                    merkle_proof,
+                    secret,
+                    signature,
+                })
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["utxo", "merkle_proof", "secret", "signature"];
+        deserializer.deserialize_struct("UTXOInput", FIELDS, UTXOInputVisitor)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -134,5 +233,31 @@ impl User {
         }
         
         selected
+    }
+    
+    // Simple signature verification (in production, use proper crypto)
+    pub fn verify_signature(&self, message: &[u8], signature: &[u8; 64], public_key: &[u8; 32]) -> bool {
+        // For now, use a simple hash-based verification
+        // In production, implement proper ECDSA or Ed25519 verification
+        let mut hasher = Sha256::new();
+        hasher.update(message);
+        hasher.update(public_key);
+        let expected_hash = hasher.finalize();
+        
+        // Simple verification: check if signature starts with expected hash prefix
+        signature[..32] == expected_hash[..32]
+    }
+    
+    pub fn sign_transaction(&self, message: &[u8]) -> [u8; 64] {
+        // Simple signature generation (in production, use proper crypto)
+        let mut hasher = Sha256::new();
+        hasher.update(message);
+        hasher.update(&self.private_key);
+        let hash = hasher.finalize();
+        
+        let mut signature = [0u8; 64];
+        signature[..32].copy_from_slice(&hash);
+        signature[32..].copy_from_slice(&self.private_key);
+        signature
     }
 }

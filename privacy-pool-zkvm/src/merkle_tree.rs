@@ -59,6 +59,19 @@ impl MerkleTree {
         })
     }
     
+    pub fn verify_merkle_proof(&self, proof: &crate::utxo::MerkleProof, leaf: &[u8; 32]) -> bool {
+        let mut current = *leaf;
+        for (sibling, is_right) in proof.siblings.iter().zip(proof.path.iter()) {
+            current = if *is_right {
+                hash_pair(current, *sibling)
+            } else {
+                hash_pair(*sibling, current)
+            };
+        }
+        // CRITICAL FIX: Verify against current tree root, not proof.root
+        current == self.root
+    }
+
     fn update_root(&mut self) -> Result<(), Error> {
         if self.utxos.is_empty() {
             self.root = [0u8; 32];
@@ -96,16 +109,26 @@ impl MerkleTree {
 }
 
 fn hash_utxo(utxo: &UTXO) -> [u8; 32] {
+    // Use ZisK precompiled hash for better performance
+    let mut data = Vec::new();
+    data.extend_from_slice(&utxo.commitment);
+    data.extend_from_slice(&utxo.value.to_le_bytes());
+    data.extend_from_slice(&utxo.owner);
+    
+    // For now, use SHA-256 but in production use ZisK precompiles
     let mut hasher = Sha256::new();
-    hasher.update(&utxo.commitment);
-    hasher.update(&utxo.value.to_le_bytes());
-    hasher.update(&utxo.owner);
+    hasher.update(&data);
     hasher.finalize().into()
 }
 
 fn hash_pair(left: [u8; 32], right: [u8; 32]) -> [u8; 32] {
+    // Use ZisK precompiled hash for better performance
+    let mut data = Vec::new();
+    data.extend_from_slice(&left);
+    data.extend_from_slice(&right);
+    
+    // For now, use SHA-256 but in production use ZisK precompiles
     let mut hasher = Sha256::new();
-    hasher.update(&left);
-    hasher.update(&right);
+    hasher.update(&data);
     hasher.finalize().into()
 }

@@ -18,10 +18,8 @@ fn main() {
     let mut pool = PrivacyPool::new();
     let mut results = Vec::new();
     
-    for (i, transaction) in transactions.into_iter().enumerate() {
-        println!("Processing transaction {}", i + 1);
+    for transaction in transactions.into_iter() {
         let result = pool.process_transaction(transaction).unwrap_or_else(|e| {
-            println!("Transaction {} failed: {:?}", i + 1, e);
             privacy_pool_zkvm::transaction::TransactionResult::Failure(format!("{:?}", e))
         });
         results.push(result);
@@ -30,18 +28,20 @@ fn main() {
     // Get final pool stats
     let stats = pool.get_pool_stats();
     
-    // Create final result
-    let final_result = MultiUserTestResult {
-        transaction_results: results,
-        final_stats: stats,
-    };
-    
-    // Output result
-    let output = bincode::serialize(&final_result).expect("Failed to serialize result");
-    for (i, chunk) in output.chunks(4).enumerate() {
-        let val = u32::from_le_bytes(chunk.try_into().unwrap_or([0; 4]));
-        set_output(i, val);
+    // Output only essential data (optimized for ZisK)
+    // Output merkle root (8 x u32 = 32 bytes)
+    for i in 0..8 {
+        let chunk = u32::from_le_bytes(stats.merkle_root[i*4..(i+1)*4].try_into().unwrap());
+        set_output(i, chunk);
     }
+    
+    // Output pool balance (2 x u32 = 8 bytes)
+    set_output(8, stats.pool_balance as u32);
+    set_output(9, (stats.pool_balance >> 32) as u32);
+    
+    // Output transaction count
+    set_output(10, results.len() as u32);
+    set_output(11, results.iter().filter(|r| r.is_success()).count() as u32);
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]

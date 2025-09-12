@@ -6,6 +6,12 @@ pub enum TransactionResult {
     Failure(String),
 }
 
+impl TransactionResult {
+    pub fn is_success(&self) -> bool {
+        matches!(self, TransactionResult::Success)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Error {
     DoubleSpend,
@@ -15,4 +21,5 @@ pub enum Error {
     MerkleTreeError(String),
     InvalidUTXO,
     UserNotFound,
+    InvalidSignature,
 }

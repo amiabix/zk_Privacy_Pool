@@ -38,7 +38,21 @@ impl PrivacyPool {
         // This entire function runs inside ZisK zkVM
         // All operations are proven
         
-        // 1. Verify all inputs are valid UTXOs
+        // 1. Verify transaction signatures
+        if !tx.inputs.is_empty() {
+            let message = self.create_transaction_message(&tx);
+            for input in &tx.inputs {
+                if let Some(user) = self.users.get(&input.utxo.owner) {
+                    if !user.verify_signature(&message, &input.signature, &input.utxo.owner) {
+                        return Err(Error::InvalidSignature);
+                    }
+                } else {
+                    return Err(Error::UserNotFound);
+                }
+            }
+        }
+        
+        // 2. Verify all inputs are valid UTXOs
         for input in &tx.inputs {
             // Check nullifier not used
             let nullifier_hash = input.utxo.compute_nullifier_hash();
@@ -61,7 +75,7 @@ impl PrivacyPool {
             }
         }
         
-        // 2. Verify total input value >= total output value + fee
+        // 3. Verify total input value >= total output value + fee
         let total_input: u64 = tx.inputs.iter().map(|i| i.utxo.value).sum();
         let total_output: u64 = tx.outputs.iter().map(|o| o.value).sum();
         
@@ -230,6 +244,27 @@ impl PrivacyPool {
             merkle_root: self.merkle_tree.root,
             nullifiers_count: self.nullifiers.len(),
         }
+    }
+    
+    pub fn create_transaction_message(&self, tx: &UTXOTransaction) -> Vec<u8> {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        
+        // Hash all input commitments
+        for input in &tx.inputs {
+            hasher.update(&input.utxo.commitment);
+        }
+        
+        // Hash all output values and recipients
+        for output in &tx.outputs {
+            hasher.update(&output.value.to_le_bytes());
+            hasher.update(&output.recipient);
+        }
+        
+        // Hash fee
+        hasher.update(&tx.fee.to_le_bytes());
+        
+        hasher.finalize().to_vec()
     }
 }
 

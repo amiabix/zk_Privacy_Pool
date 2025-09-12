@@ -58,11 +58,12 @@ fn main() {
         leaf_index: 0,
     };
     
-    let deposit_tx = UTXOTransaction {
+    let mut deposit_tx = UTXOTransaction {
         inputs: vec![UTXOInput {
             utxo: external_utxo,
             merkle_proof: mock_proof,
             secret: [0u8; 32],
+            signature: [0u8; 64], // Will be filled below
         }],
         outputs: vec![UTXOOutput {
             value: 500,
@@ -73,6 +74,15 @@ fn main() {
         fee: 10,
         tx_type: TransactionType::Deposit { amount: 500, recipient: [0u8; 32] },
     };
+    
+    // Sign the transaction
+    let message = pool.create_transaction_message(&deposit_tx);
+    let signature = {
+        let user0 = pool.get_user(&[0u8; 32]).unwrap();
+        user0.sign_transaction(&message)
+    };
+    deposit_tx.inputs[0].signature = signature;
+    
     transactions.push(deposit_tx);
     
     // Transaction 2: User 1 deposits 300
@@ -87,11 +97,12 @@ fn main() {
         leaf_index: 0,
     };
     
-    let deposit_tx2 = UTXOTransaction {
+    let mut deposit_tx2 = UTXOTransaction {
         inputs: vec![UTXOInput {
             utxo: external_utxo,
             merkle_proof: mock_proof,
             secret: [1u8; 32],
+            signature: [0u8; 64], // Will be filled below
         }],
         outputs: vec![UTXOOutput {
             value: 300,
@@ -102,6 +113,14 @@ fn main() {
         fee: 10,
         tx_type: TransactionType::Deposit { amount: 300, recipient: [1u8; 32] },
     };
+    
+    // Sign transaction 2
+    let message2 = pool.create_transaction_message(&deposit_tx2);
+    let signature2 = {
+        let user1 = pool.get_user(&[1u8; 32]).unwrap();
+        user1.sign_transaction(&message2)
+    };
+    deposit_tx2.inputs[0].signature = signature2;
     transactions.push(deposit_tx2);
     
     // Transaction 3: User 2 deposits 800
@@ -116,11 +135,12 @@ fn main() {
         leaf_index: 0,
     };
     
-    let deposit_tx3 = UTXOTransaction {
+    let mut deposit_tx3 = UTXOTransaction {
         inputs: vec![UTXOInput {
             utxo: external_utxo,
             merkle_proof: mock_proof,
             secret: [2u8; 32],
+            signature: [0u8; 64], // Will be filled below
         }],
         outputs: vec![UTXOOutput {
             value: 800,
@@ -131,6 +151,14 @@ fn main() {
         fee: 10,
         tx_type: TransactionType::Deposit { amount: 800, recipient: [2u8; 32] },
     };
+    
+    // Sign transaction 3
+    let message3 = pool.create_transaction_message(&deposit_tx3);
+    let signature3 = {
+        let user2 = pool.get_user(&[2u8; 32]).unwrap();
+        user2.sign_transaction(&message3)
+    };
+    deposit_tx3.inputs[0].signature = signature3;
     transactions.push(deposit_tx3);
     
     // Transaction 4: User 0 withdraws 200 (pool UTXO -> external)
@@ -141,11 +169,12 @@ fn main() {
     let utxo_index = pool.merkle_tree.insert_utxo(pool_utxo.clone()).unwrap();
     let merkle_proof = pool.merkle_tree.generate_proof(utxo_index as usize).unwrap();
     
-    let withdraw_tx = UTXOTransaction {
+    let mut withdraw_tx = UTXOTransaction {
         inputs: vec![UTXOInput {
             utxo: pool_utxo,
             merkle_proof,
             secret: [0u8; 32],
+            signature: [0u8; 64], // Will be filled below
         }],
         outputs: vec![UTXOOutput {
             value: 200,
@@ -156,6 +185,14 @@ fn main() {
         fee: 10,
         tx_type: TransactionType::Withdraw { amount: 200, recipient: [0u8; 32] },
     };
+    
+    // Sign transaction 4
+    let message4 = pool.create_transaction_message(&withdraw_tx);
+    let signature4 = {
+        let user0 = pool.get_user(&[0u8; 32]).unwrap();
+        user0.sign_transaction(&message4)
+    };
+    withdraw_tx.inputs[0].signature = signature4;
     transactions.push(withdraw_tx);
     
     // Transaction 5: User 3 transfers 400 to User 4 (pool UTXO -> pool UTXO)
@@ -164,11 +201,12 @@ fn main() {
     let utxo_index2 = pool.merkle_tree.insert_utxo(pool_utxo2.clone()).unwrap();
     let merkle_proof2 = pool.merkle_tree.generate_proof(utxo_index2 as usize).unwrap();
     
-    let transfer_tx = UTXOTransaction {
+    let mut transfer_tx = UTXOTransaction {
         inputs: vec![UTXOInput {
             utxo: pool_utxo2,
             merkle_proof: merkle_proof2,
             secret: [3u8; 32],
+            signature: [0u8; 64], // Will be filled below
         }],
         outputs: vec![UTXOOutput {
             value: 400,
@@ -179,6 +217,14 @@ fn main() {
         fee: 10,
         tx_type: TransactionType::Transfer { recipient: [4u8; 32] },
     };
+    
+    // Sign transaction 5
+    let message5 = pool.create_transaction_message(&transfer_tx);
+    let signature5 = {
+        let user3 = pool.get_user(&[3u8; 32]).unwrap();
+        user3.sign_transaction(&message5)
+    };
+    transfer_tx.inputs[0].signature = signature5;
     transactions.push(transfer_tx);
     
     // Save all transactions to input.bin

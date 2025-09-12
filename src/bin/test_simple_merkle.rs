@@ -50,9 +50,9 @@ async fn main() -> Result<()> {
     for (i, (sibling, is_right)) in proof1.siblings.iter().zip(proof1.path_indices.iter()).enumerate() {
         println!("   Step {}: sibling={:?}, is_right={}", i, sibling, is_right);
         current = if *is_right {
-            tree.hash_pair(current, *sibling)
-        } else {
             tree.hash_pair(*sibling, current)
+        } else {
+            tree.hash_pair(current, *sibling)
         };
         println!("   Step {} result: {:?}", i, current);
     }
@@ -77,9 +77,9 @@ async fn main() -> Result<()> {
     for (i, (sibling, is_right)) in proof2.siblings.iter().zip(proof2.path_indices.iter()).enumerate() {
         println!("   Step {}: sibling={:?}, is_right={}", i, sibling, is_right);
         current = if *is_right {
-            tree.hash_pair(current, *sibling)
-        } else {
             tree.hash_pair(*sibling, current)
+        } else {
+            tree.hash_pair(current, *sibling)
         };
         println!("   Step {} result: {:?}", i, current);
     }

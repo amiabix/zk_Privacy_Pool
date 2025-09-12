@@ -192,41 +192,47 @@ impl EnhancedMerkleTree {
         let mut path_indices = Vec::new();
         let mut current_index = index;
         
-        // Build the complete tree structure exactly like update_root does
+        // Build the tree structure level by level, exactly like update_root
+        let mut levels = Vec::new();
         let mut current_level = self.utxos
             .iter()
             .map(|utxo| self.hash_utxo(utxo))
             .collect::<Vec<_>>();
         
-        // Generate proof by traversing tree levels
+        // Store all levels of the tree
+        levels.push(current_level.clone());
+        
+        // Build tree bottom-up, storing each level
         while current_level.len() > 1 {
-            let is_right = current_index % 2 == 1;
-            let sibling_index = if is_right { current_index - 1 } else { current_index + 1 };
-            
-            // Find sibling
-            if sibling_index < current_level.len() {
-                siblings.push(current_level[sibling_index]);
-            } else {
-                // For odd number of nodes, the sibling is the same node (duplication)
-                siblings.push(current_level[current_index]);
-            }
-            
-            path_indices.push(is_right);
-            
-            // Build next level
             let mut next_level = Vec::new();
             for i in (0..current_level.len()).step_by(2) {
                 let left = current_level[i];
                 let right = if i + 1 < current_level.len() {
                     current_level[i + 1]
                 } else {
-                    // Duplicate last element if odd number
+                    // For odd number of nodes, duplicate the last one
                     current_level[i]
                 };
                 next_level.push(self.hash_pair(left, right));
             }
-            
             current_level = next_level;
+            levels.push(current_level.clone());
+        }
+        
+        // Now generate proof by traversing the stored levels
+        current_index = index;
+        for level in &levels[0..levels.len()-1] {
+            let is_right = current_index % 2 == 1;
+            let sibling_index = if is_right { current_index - 1 } else { current_index + 1 };
+            
+            if sibling_index < level.len() {
+                siblings.push(level[sibling_index]);
+            } else {
+                // Use the same node if no sibling (odd number case)
+                siblings.push(level[current_index]);
+            }
+            
+            path_indices.push(is_right);
             current_index /= 2;
         }
         
@@ -244,9 +250,11 @@ impl EnhancedMerkleTree {
         for (sibling, is_right) in proof.siblings.iter().zip(proof.path_indices.iter()) {
             current = if *is_right {
                 // Current node is on the right, sibling on the left
+                // Tree was built as hash_pair(left, right), so hash_pair(sibling, current)
                 self.hash_pair(*sibling, current)
             } else {
                 // Current node is on the left, sibling on the right
+                // Tree was built as hash_pair(left, right), so hash_pair(current, sibling)
                 self.hash_pair(current, *sibling)
             };
         }

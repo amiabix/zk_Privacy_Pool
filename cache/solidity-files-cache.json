@@ -1,0 +1,417 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/ETHPrivacyPool.sol": {
+      "lastModificationDate": 1757695034823,
+      "contentHash": "d7e80c6cadba57587e1955b1364ff8aa",
+      "sourceName": "contracts/ETHPrivacyPool.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./PrivacyPool.sol"
+      ],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "ETHPrivacyPool"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/PrivacyPool.sol": {
+      "lastModificationDate": 1757695296007,
+      "contentHash": "540f8d90b3f1742fc08f300adfea0533",
+      "sourceName": "contracts/PrivacyPool.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./poseidon/PoseidonT4.sol",
+        "./lib/Constants.sol",
+        "./lib/ProofLib.sol",
+        "./interfaces/IPrivacyPool.sol",
+        "./interfaces/IEntrypoint.sol",
+        "./interfaces/IVerifier.sol",
+        "./State.sol"
+      ],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "PrivacyPool"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/lib/ProofLib.sol": {
+      "lastModificationDate": 1757694982205,
+      "contentHash": "be5b9b519d92609c2e90b31657fad2b3",
+      "sourceName": "contracts/lib/ProofLib.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "ProofLib"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/interfaces/IPrivacyPool.sol": {
+      "lastModificationDate": 1757695227910,
+      "contentHash": "0ba7aa33e1d45ec8590f018915b019bd",
+      "sourceName": "contracts/interfaces/IPrivacyPool.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../lib/ProofLib.sol"
+      ],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "IPrivacyPool"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/lib/Constants.sol": {
+      "lastModificationDate": 1757694968474,
+      "contentHash": "0dd39b0eec839aa2bf3acd890f5208b1",
+      "sourceName": "contracts/lib/Constants.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "Constants"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/poseidon/PoseidonT4.sol": {
+      "lastModificationDate": 1757695276744,
+      "contentHash": "d7f8d3f553320e7882c275c149a2527f",
+      "sourceName": "contracts/poseidon/PoseidonT4.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "PoseidonT4"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/interfaces/IEntrypoint.sol": {
+      "lastModificationDate": 1757695253137,
+      "contentHash": "ca85b8de36ff4dfbaff40c7d1b57bc4b",
+      "sourceName": "contracts/interfaces/IEntrypoint.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "IEntrypoint"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/interfaces/IVerifier.sol": {
+      "lastModificationDate": 1757695284676,
+      "contentHash": "c6d35419981b9d173b063f17fe2d0fa8",
+      "sourceName": "contracts/interfaces/IVerifier.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "IVerifier"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/State.sol": {
+      "lastModificationDate": 1757695001583,
+      "contentHash": "2d90554c9bd72918b40d0da805642d35",
+      "sourceName": "contracts/State.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./lib/Constants.sol",
+        "./lib/ProofLib.sol",
+        "./interfaces/IPrivacyPool.sol"
+      ],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "State"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/Entrypoint.sol": {
+      "lastModificationDate": 1757695038738,
+      "contentHash": "0ef5d40e0a639e85a1c6f080d39e003c",
+      "sourceName": "contracts/Entrypoint.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "Entrypoint"
+      ]
+    },
+    "/Users/abix/Desktop/privacy-pool-zkvm/contracts/Verifier.sol": {
+      "lastModificationDate": 1757695043727,
+      "contentHash": "3601a77b00fcafaf7901b58b6e4ef041",
+      "sourceName": "contracts/Verifier.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.28"
+      ],
+      "artifacts": [
+        "Verifier"
+      ]
+    }
+  }
+}

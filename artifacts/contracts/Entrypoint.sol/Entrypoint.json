@@ -1,0 +1,50 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "Entrypoint",
+  "sourceName": "contracts/Entrypoint.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "root",
+          "type": "uint256"
+        }
+      ],
+      "name": "RootSubmitted",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "latestRoot",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_root",
+          "type": "uint256"
+        }
+      ],
+      "name": "submitRoot",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080604052348015600f57600080fd5b5060e08061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c8063c61b2e82146037578063d7b0fef1146048575b600080fd5b604660423660046092565b6062565b005b605060005481565b60405190815260200160405180910390f35b600081815560405182917f17d62785f0e8e3298eb88390ddfe5f4c2c0cc090ca6e0df8713ad42d099fb5c891a250565b60006020828403121560a357600080fd5b503591905056fea26469706673582212202ab2f41c970bc037ea32a6d22d30b5d27894520f0f6c9031c21a2219450ce44264736f6c634300081c0033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060325760003560e01c8063c61b2e82146037578063d7b0fef1146048575b600080fd5b604660423660046092565b6062565b005b605060005481565b60405190815260200160405180910390f35b600081815560405182917f17d62785f0e8e3298eb88390ddfe5f4c2c0cc090ca6e0df8713ad42d099fb5c891a250565b60006020828403121560a357600080fd5b503591905056fea26469706673582212202ab2f41c970bc037ea32a6d22d30b5d27894520f0f6c9031c21a2219450ce44264736f6c634300081c0033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

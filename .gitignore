@@ -9,6 +9,32 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# output
+out
+dist
+*.tgz
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
 # IDE
 .vscode/
 .idea/
@@ -24,16 +50,11 @@ Thumbs.db
 /dist/
 *.wasm
 
-# Environment
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Logs
-*.log
-
 # Temporary files
 *.tmp
 *.temp
+
+# db, in memory key-value store directory used by unstorage
+db
+
+.vercelzeropool-substrate/

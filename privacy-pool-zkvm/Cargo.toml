@@ -5,12 +5,68 @@ edition = "2021"
 default-run = "privacy-pool-zkvm"
 
 [[bin]]
+name = "privacy-pool-zkvm"
+path = "src/main.rs"
+
+[[bin]]
 name = "create_multi_user_test"
 path = "src/create_multi_user_test.rs"
 
 [[bin]]
 name = "simple_test"
 path = "src/simple_test.rs"
+
+[[bin]]
+name = "individual_tx"
+path = "src/individual_tx.rs"
+
+[[bin]]
+name = "pool_accounting"
+path = "src/pool_accounting.rs"
+
+[[bin]]
+name = "create_individual_tx_test"
+path = "src/create_individual_tx_test.rs"
+
+[[bin]]
+name = "create_pool_batch_test"
+path = "src/create_pool_batch_test.rs"
+
+[[bin]]
+name = "create_simple_individual_test"
+path = "src/create_simple_individual_test.rs"
+
+[[bin]]
+name = "ultra_simple_tx"
+path = "src/ultra_simple_tx.rs"
+
+[[bin]]
+name = "create_ultra_simple_test"
+path = "src/create_ultra_simple_test.rs"
+
+[[bin]]
+name = "simple_pool_accounting"
+path = "src/simple_pool_accounting.rs"
+
+[[bin]]
+name = "create_simple_pool_batch_test"
+path = "src/create_simple_pool_batch_test.rs"
+
+[[bin]]
+name = "ultra_simple_pool"
+path = "src/ultra_simple_pool.rs"
+
+[[bin]]
+name = "create_ultra_simple_pool_test"
+path = "src/create_ultra_simple_pool_test.rs"
+
+[[bin]]
+name = "real_privacy_pool"
+path = "src/real_privacy_pool.rs"
+
+[[bin]]
+name = "create_real_privacy_pool_test"
+path = "src/create_real_privacy_pool_test.rs"
 
 [dependencies]
 ziskos = { git = "https://github.com/0xPolygonHermez/zisk.git" }

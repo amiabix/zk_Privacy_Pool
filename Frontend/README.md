@@ -284,14 +284,14 @@ The application provides clear error messages for:
 
 ```
 Frontend/
-├── src/
-│   ├── App.jsx              # Main application component
-│   ├── index.css            # Global styles
-│   ├── main.jsx             # Application entry point
-│   └── vite.config.js       # Vite configuration
-├── public/                  # Static assets
-├── package.json             # Dependencies and scripts
-└── README.md               # This file
+ src/
+    App.jsx              # Main application component
+    index.css            # Global styles
+    main.jsx             # Application entry point
+    vite.config.js       # Vite configuration
+ public/                  # Static assets
+ package.json             # Dependencies and scripts
+ README.md               # This file
 ```
 
 ### Available Scripts

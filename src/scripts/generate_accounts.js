@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 
 async function main() {
-    console.log("🔑 Generating test accounts...");
+    console.log(" Generating test accounts...");
     
     const accounts = [];
     const privateKeys = [];
@@ -17,7 +17,7 @@ async function main() {
         privateKeys.push(wallet.privateKey);
     }
     
-    console.log("📋 Generated accounts:");
+    console.log(" Generated accounts:");
     accounts.forEach((account, index) => {
         console.log(`  Account ${index + 1}:`);
         console.log(`    Address: ${account.address}`);
@@ -26,7 +26,7 @@ async function main() {
     });
     
     // Fund accounts from Anvil's first account (which has 1000 ETH)
-    console.log("💰 Funding accounts...");
+    console.log(" Funding accounts...");
     
     const [deployer] = await ethers.getSigners();
     const fundingAmount = ethers.parseEther("10"); // 10 ETH per account
@@ -44,9 +44,9 @@ async function main() {
             await tx.wait();
             
             const balance = await ethers.provider.getBalance(account.address);
-            console.log(`  ✅ Account ${i + 1} funded: ${ethers.formatEther(balance)} ETH`);
+            console.log(`   Account ${i + 1} funded: ${ethers.formatEther(balance)} ETH`);
         } catch (error) {
-            console.log(`  ❌ Failed to fund account ${i + 1}: ${error.message}`);
+            console.log(`   Failed to fund account ${i + 1}: ${error.message}`);
         }
     }
     
@@ -60,18 +60,18 @@ async function main() {
     
     const fs = require('fs');
     fs.writeFileSync('accounts.json', JSON.stringify(accountInfo, null, 2));
-    console.log("💾 Account info saved to accounts.json");
+    console.log(" Account info saved to accounts.json");
     
     return accounts;
 }
 
 main()
     .then((accounts) => {
-        console.log("🎉 Account generation completed successfully!");
+        console.log(" Account generation completed successfully!");
         console.log(`Generated ${accounts.length} accounts`);
         process.exit(0);
     })
     .catch((error) => {
-        console.error("❌ Account generation failed:", error);
+        console.error(" Account generation failed:", error);
         process.exit(1);
     });

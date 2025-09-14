@@ -8,15 +8,15 @@ async function checkContract() {
   
   // Check actual ETH balance
   const balance = await provider.getBalance(contractAddress);
-  console.log("💰 REAL Contract Balance:", ethers.formatEther(balance), "ETH");
+  console.log(" REAL Contract Balance:", ethers.formatEther(balance), "ETH");
   
   // Check if contract has any code
   const code = await provider.getCode(contractAddress);
-  console.log("📄 Contract Code Length:", code.length);
+  console.log(" Contract Code Length:", code.length);
   
   // Get recent transactions
   const blockNumber = await provider.getBlockNumber();
-  console.log("🔢 Current Block:", blockNumber);
+  console.log(" Current Block:", blockNumber);
 }
 
 checkContract().catch(console.error);

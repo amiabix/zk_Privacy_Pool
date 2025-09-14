@@ -73,7 +73,7 @@ impl ApiServer {
         let service_builder = if config.enable_logging {
             service_builder.layer(middleware::create_logging_layer())
         } else {
-            service_builder
+            service_builder.layer(tower::layer::util::Identity::new())
         };
         
         // Skip timeout layer for now - can be added later
@@ -84,14 +84,14 @@ impl ApiServer {
     
     /// Start the server
     pub async fn start(self) -> Result<()> {
-        println!("🚀 Privacy Pool API Server starting...");
-        println!("📍 Listening on: http://{}", self.config.bind_addr);
-        println!("⚙️  Configuration:");
+        println!(" Privacy Pool API Server starting...");
+        println!(" Listening on: http://{}", self.config.bind_addr);
+        println!("  Configuration:");
         println!("   - Max request size: {} bytes", self.config.max_request_size);
         println!("   - Request timeout: {}s", self.config.request_timeout);
         println!("   - Logging enabled: {}", self.config.enable_logging);
         println!();
-        println!("📋 Available endpoints:");
+        println!(" Available endpoints:");
         println!("   GET  /api/health          - Health check");
         println!("   POST /api/deposit         - Process ETH deposit");
         println!("   GET  /api/balance/:owner  - Get owner balance");
@@ -109,7 +109,7 @@ impl ApiServer {
             .with_graceful_shutdown(Self::shutdown_signal())
             .await?;
             
-        println!("🛑 Server stopped gracefully");
+        println!(" Server stopped gracefully");
         Ok(())
     }
     
@@ -119,7 +119,7 @@ impl ApiServer {
             .await
             .expect("Failed to install CTRL+C signal handler");
         
-        println!("\n🛑 Received shutdown signal, stopping server...");
+        println!("\n Received shutdown signal, stopping server...");
     }
     
     /// Get server configuration

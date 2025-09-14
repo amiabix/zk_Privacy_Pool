@@ -240,17 +240,17 @@ GET /api/balance/:owner
 
 ```
 privacy-pool-zkvm/
-├── src/                    # Rust backend source
-│   ├── api/               # REST API implementation
-│   ├── utxo/              # UTXO system and management
-│   ├── privacy/           # Privacy pool core logic
-│   ├── merkle/            # Merkle tree implementation
-│   ├── relayer/           # Blockchain integration
-│   ├── circuits/          # Zero-knowledge circuits
-│   └── contracts/         # Smart contracts
-├── Frontend/              # React frontend application
-├── scripts/               # Deployment and utility scripts
-└── artifacts/             # Compiled contract artifacts
+ src/                    # Rust backend source
+    api/               # REST API implementation
+    utxo/              # UTXO system and management
+    privacy/           # Privacy pool core logic
+    merkle/            # Merkle tree implementation
+    relayer/           # Blockchain integration
+    circuits/          # Zero-knowledge circuits
+    contracts/         # Smart contracts
+ Frontend/              # React frontend application
+ scripts/               # Deployment and utility scripts
+ artifacts/             # Compiled contract artifacts
 ```
 
 ### Testing

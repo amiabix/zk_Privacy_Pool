@@ -149,7 +149,7 @@ pub const ETH_ASSET_ID: &str = "0000000000000000000000000000000000000000";
 
 /// Utility functions for hex encoding/decoding
 pub mod utils {
-    use super::*;
+    
     
     /// Convert bytes to hex string
     pub fn bytes_to_hex(bytes: &[u8]) -> String {

@@ -3,7 +3,7 @@
 //! High-performance query interface for the privacy pool database
 //! with optimized patterns for wallet queries and proof generation.
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use crate::database::schema::{DatabaseManager, cf_names};
 use crate::canonical_spec::cf_prefixes;
 use crate::utxo::CanonicalUTXO;

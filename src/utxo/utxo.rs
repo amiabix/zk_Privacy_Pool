@@ -48,12 +48,31 @@ impl UTXO {
 
     /// Generate nullifier for this UTXO
     pub fn generate_nullifier(&self) -> [u8; 32] {
-        use sha2::{Sha256, Digest};
-        let mut hasher = Sha256::new();
-        hasher.update(&self.secret);
-        hasher.update(&self.nullifier_seed);
-        hasher.update(&self.commitment);
-        hasher.finalize().into()
+        use crate::crypto::nullifiers::NullifierGenerator;
+        use crate::crypto::nullifiers::NullifierHashFunction;
+        use crate::crypto::CryptoContext;
+        
+        let context = CryptoContext::nullifier_context();
+        let generator = NullifierGenerator::new(context, NullifierHashFunction::Blake2b256);
+        
+        // Create nullifier seed
+        let mut seed = Vec::new();
+        seed.extend_from_slice(&self.secret);
+        seed.extend_from_slice(&self.nullifier_seed);
+        seed.extend_from_slice(&self.commitment);
+        
+        // Hash the seed
+        // Generate nullifier using Poseidon hash
+        let mut input = Vec::new();
+        input.extend_from_slice(&self.commitment);
+        input.extend_from_slice(&[0u8; 8]); // utxo_index as 8 bytes
+        crate::crypto::poseidon::PoseidonHash::new().hash(&input).unwrap_or_else(|_| {
+            // Fallback to SHA-256 if Poseidon fails
+            use sha2::{Sha256, Digest};
+            let mut hasher = Sha256::new();
+            hasher.update(&seed);
+            hasher.finalize().into()
+        })
     }
 
     /// Verify nullifier
@@ -63,13 +82,26 @@ impl UTXO {
 
     /// Compute commitment hash
     pub fn compute_commitment(&self) -> [u8; 32] {
-        use sha2::{Sha256, Digest};
-        let mut hasher = Sha256::new();
-        hasher.update(&self.value.to_le_bytes());
-        hasher.update(&self.owner);
-        hasher.update(&self.blinding_factor);
-        hasher.update(&self.nullifier_seed);
-        hasher.finalize().into()
+        use crate::crypto::poseidon::PoseidonHasher;
+        use crate::crypto::CryptoContext;
+        
+        let context = CryptoContext::utxo_context();
+        
+        // Use Poseidon hash for commitment
+        PoseidonHasher::utxo_commitment(
+            self.value,
+            &self.owner,
+            &self.blinding_factor,
+        ).unwrap_or_else(|_| {
+            // Fallback to SHA-256 if Poseidon fails
+            use sha2::{Sha256, Digest};
+            let mut hasher = Sha256::new();
+            hasher.update(&self.value.to_le_bytes());
+            hasher.update(&self.owner);
+            hasher.update(&self.blinding_factor);
+            hasher.update(&self.nullifier_seed);
+            hasher.finalize().into()
+        })
     }
 
     /// Verify ownership
@@ -229,9 +261,27 @@ impl UTXOTransaction {
 
     /// Verify transaction signature
     pub fn verify_signature(&self) -> bool {
-        // Simplified signature verification
-        // In this would use proper cryptographic verification
-        !self.signature.is_empty() && self.signature.len() == 64
+        use crate::crypto::signatures::{Ed25519Sig, EcdsaSig};
+        
+        // Try Ed25519 verification
+        if let Ok(signature_bytes) = <[u8; 96]>::try_from(&self.signature[..96]) {
+            if let Ok(ed25519_sig) = Ed25519Sig::from_bytes(&signature_bytes) {
+                if ed25519_sig.verify(&self.tx_hash).unwrap_or(false) {
+                    return true;
+                }
+            }
+        }
+        
+        // Try ECDSA verification
+        if let Ok(signature_bytes) = <[u8; 97]>::try_from(&self.signature[..97]) {
+            if let Ok(ecdsa_sig) = EcdsaSig::from_bytes(&signature_bytes) {
+                if ecdsa_sig.verify(&self.tx_hash).unwrap_or(false) {
+                    return true;
+                }
+            }
+        }
+        
+        false
     }
 
     /// Get total input value

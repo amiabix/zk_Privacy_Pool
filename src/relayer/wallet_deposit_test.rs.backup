@@ -1,0 +1,315 @@
+//! Wallet Deposit Test
+//! Tests real wallet addresses depositing ETH and creating UTXOs
+
+
+/// Test wallet with address and private key
+#[derive(Debug, Clone)]
+pub struct TestWallet {
+    pub address: [u8; 20],
+    pub private_key: [u8; 32],
+    pub name: String,
+}
+
+/// Deposit transaction simulation
+#[derive(Debug, Clone)]
+pub struct DepositTransaction {
+    pub from_wallet: TestWallet,
+    pub amount_wei: u64,
+    pub block_number: u64,
+    pub tx_hash: [u8; 32],
+    pub commitment: [u8; 32],
+    pub label: u64,
+}
+
+impl TestWallet {
+    pub fn new(name: &str, seed: u64) -> Self {
+        // Generate deterministic wallet from seed
+        let mut address = [0u8; 20];
+        let mut private_key = [0u8; 32];
+        
+        for i in 0..20 {
+            address[i] = ((seed + i as u64) % 256) as u8;
+        }
+        for i in 0..32 {
+            private_key[i] = ((seed + i as u64 + 100) % 256) as u8;
+        }
+        
+        Self {
+            address,
+            private_key,
+            name: name.to_string(),
+        }
+    }
+    
+    pub fn address_hex(&self) -> String {
+        format!("0x{}", hex::encode(self.address))
+    }
+    
+    pub fn private_key_hex(&self) -> String {
+        format!("0x{}", hex::encode(self.private_key))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_wallet_deposits_and_utxo_creation() {
+        println!("🚀 Testing Wallet Deposits and UTXO Creation");
+        println!("=============================================");
+
+        // Step 1: Create Test Wallets
+        println!("\n👛 Step 1: Creating Test Wallets");
+        let wallets = vec![
+            TestWallet::new("Alice", 1),
+            TestWallet::new("Bob", 2),
+            TestWallet::new("Charlie", 3),
+            TestWallet::new("Diana", 4),
+        ];
+        
+        for wallet in &wallets {
+            println!("   ✅ {}: {}", wallet.name, wallet.address_hex());
+        }
+
+        // Step 2: Initialize Relayer Service
+        println!("\n🔄 Step 2: Initialize Relayer Service");
+        let config = crate::merkle::enhanced_merkle_tree::RelayerConfig {
+            max_depth: 20,
+            batch_size: 10,
+            update_interval: 60,
+        };
+        let mut relayer = crate::merkle::enhanced_merkle_tree::RelayerService::new(config);
+        println!("   ✅ Relayer service initialized");
+
+        // Step 3: Initialize UTXO Privacy Pool
+        println!("\n💎 Step 3: Initialize UTXO Privacy Pool");
+        let mut utxo_pool = UTXOPrivacyPool::new([0x01; 32]);
+        
+        // Register all wallets as users
+        for wallet in &wallets {
+            utxo_pool.register_user(wallet.address, wallet.private_key);
+            println!("   ✅ Registered user: {}", wallet.name);
+        }
+
+        // Step 4: Simulate ETH Deposits
+        println!("\n💰 Step 4: Simulate ETH Deposits");
+        let mut deposit_transactions = Vec::new();
+        
+        for (i, wallet) in wallets.iter().enumerate() {
+            let amount_wei = 1000000000000000000 * (i as u64 + 1); // 1, 2, 3, 4 ETH
+            let tx_hash = generate_tx_hash(i as u64);
+            let commitment = generate_commitment(i as u64);
+            
+            let deposit_tx = DepositTransaction {
+                from_wallet: wallet.clone(),
+                amount_wei,
+                block_number: 100 + i as u64,
+                tx_hash,
+                commitment,
+                label: i as u64 + 1,
+            };
+            
+            deposit_transactions.push(deposit_tx);
+            
+            println!("   💸 {} deposits {} ETH ({} wei)", 
+                wallet.name, 
+                amount_wei as f64 / 1e18,
+                amount_wei
+            );
+        }
+
+        // Step 5: Process Deposits through Relayer
+        println!("\n🌳 Step 5: Process Deposits through Relayer");
+        let mut total_deposits = 0;
+        let mut successful_deposits = 0;
+        
+        for deposit_tx in &deposit_transactions {
+            // Create deposit event for relayer
+            let deposit_event = ETHDepositEvent {
+                depositor: deposit_tx.from_wallet.address,
+                amount_wei: deposit_tx.amount_wei,
+                block_number: deposit_tx.block_number,
+                tx_hash: deposit_tx.tx_hash,
+                log_index: 0,
+                commitment: deposit_tx.commitment,
+                label: deposit_tx.label,
+            };
+            
+            // Add commitment to relayer (simulate)
+            let commitment = [deposit_tx.block_number as u8; 32];
+            let relayer_result = relayer.add_commitment(commitment);
+            
+            if relayer_result.is_ok() {
+                successful_deposits += 1;
+                println!("   ✅ {} deposit processed successfully", deposit_tx.from_wallet.name);
+            }
+            
+            // Convert to UTXO
+            let utxo_result = utxo_pool.process_eth_deposit(deposit_event);
+            if utxo_result.is_ok() {
+                let utxo_ids = utxo_result.unwrap();
+                total_deposits += 1;
+                println!("   💎 Created {} UTXOs for {}", utxo_ids.len(), deposit_tx.from_wallet.name);
+            } else {
+                println!("   ❌ Failed to create UTXOs for {}: {}", 
+                    deposit_tx.from_wallet.name, 
+                    utxo_result.err().unwrap()
+                );
+            }
+        }
+
+        // Step 6: Verify UTXO Creation
+        println!("\n🔍 Step 6: Verify UTXO Creation");
+        let mut total_utxos = 0;
+        let mut total_balance = 0;
+        
+        for wallet in &wallets {
+            let balance = utxo_pool.get_user_balance(&wallet.private_key);
+            let utxos = utxo_pool.get_user_utxos(&wallet.private_key);
+            
+            total_utxos += utxos.len();
+            total_balance += balance;
+            
+            println!("   👤 {}: {} UTXOs, {} ETH balance", 
+                wallet.name, 
+                utxos.len(),
+                balance as f64 / 1e18
+            );
+            
+            // Show UTXO details
+            for (i, utxo) in utxos.iter().enumerate() {
+                println!("      UTXO {}: {} ETH (Commitment: {:?})", 
+                    i + 1, 
+                    utxo.value as f64 / 1e18,
+                    &utxo.address[..8] // Show first 8 bytes of commitment
+                );
+            }
+        }
+
+        // Step 7: Check Merkle Tree State
+        println!("\n🌳 Step 7: Check Merkle Tree State");
+        let root = relayer.get_root();
+        println!("   📊 Tree Stats:");
+        println!("      - Root Hash: {}", hex::encode(&root));
+
+        // Step 8: Test Spending
+        println!("\n💸 Step 8: Test Spending");
+        for wallet in &wallets {
+            let utxos = utxo_pool.get_user_utxos(&wallet.private_key);
+            if let Some(utxo) = utxos.first() {
+                // Create UTXOId from UTXO commitment
+                let utxo_id = crate::utxo::UTXOId::new(utxo.address, 0);
+                let spending_proof = utxo_pool.prepare_spending_proof(
+                    utxo_id,
+                    utxo.value / 2, // Spend half
+                    [0x99u8; 20], // Recipient
+                );
+                
+                if spending_proof.is_ok() {
+                    let proof = spending_proof.unwrap();
+                    println!("   ✅ {} can spend {} ETH (remaining: {} ETH)", 
+                        wallet.name,
+                        proof.withdrawn_value as f64 / 1e18,
+                        proof.remaining_value as f64 / 1e18
+                    );
+                } else {
+                    println!("   ❌ {} cannot spend: {}", 
+                        wallet.name, 
+                        spending_proof.err().unwrap()
+                    );
+                }
+            }
+        }
+
+        // Step 9: Summary
+        println!("\n📊 Step 9: Test Summary");
+        println!("========================");
+        println!("✅ Wallets created: {}", wallets.len());
+        println!("✅ Deposits processed: {}", total_deposits);
+        println!("✅ Total UTXOs created: {}", total_utxos);
+        println!("✅ Total balance: {} ETH", total_balance as f64 / 1e18);
+        println!("✅ Merkle tree root: {}", hex::encode(&root));
+        
+        // Assertions
+        assert_eq!(total_deposits, wallets.len(), "All deposits should be processed");
+        assert!(total_utxos > 0, "UTXOs should be created");
+        assert!(total_balance > 0, "Total balance should be positive");
+        assert!(!root.iter().all(|&x| x == 0), "Merkle tree should have non-zero root");
+        
+        println!("\n🎉 WALLET DEPOSIT TEST PASSED!");
+        println!("All wallets successfully deposited ETH and created UTXOs!");
+    }
+
+    #[test]
+    fn test_large_deposit_scenario() {
+        println!("\n🚀 Testing Large Deposit Scenario");
+        println!("==================================");
+
+        // Create 10 wallets with different amounts
+        let mut wallets = Vec::new();
+        for i in 0..10 {
+            let wallet = TestWallet::new(&format!("User{}", i + 1), i as u64 + 100);
+            wallets.push(wallet);
+        }
+
+        let mut utxo_pool = UTXOPrivacyPool::new([0x02; 32]);
+        
+        // Register all wallets
+        for wallet in &wallets {
+            utxo_pool.register_user(wallet.address, wallet.private_key);
+        }
+
+        // Simulate deposits
+        let mut total_deposited = 0;
+        for (i, wallet) in wallets.iter().enumerate() {
+            let amount_wei = 5000000000000000000 + (i as u64 * 1000000000000000000); // 5-14 ETH
+            let deposit_event = ETHDepositEvent {
+                depositor: wallet.address,
+                amount_wei,
+                block_number: 200 + i as u64,
+                tx_hash: generate_tx_hash(i as u64 + 100),
+                log_index: 0,
+                commitment: generate_commitment(i as u64 + 100),
+                label: i as u64 + 100,
+            };
+            
+            let result = utxo_pool.process_eth_deposit(deposit_event);
+            if result.is_ok() {
+                total_deposited += amount_wei;
+                println!("✅ {} deposited {} ETH", wallet.name, amount_wei as f64 / 1e18);
+            }
+        }
+
+        // Check total balance
+        let mut total_balance = 0;
+        for wallet in &wallets {
+            let balance = utxo_pool.get_user_balance(&wallet.private_key);
+            total_balance += balance;
+        }
+
+        println!("📊 Total deposited: {} ETH", total_deposited as f64 / 1e18);
+        println!("📊 Total balance: {} ETH", total_balance as f64 / 1e18);
+        
+        assert_eq!(total_deposited, total_balance, "Total deposited should equal total balance");
+        println!("✅ Large deposit scenario test passed!");
+    }
+}
+
+/// Generate deterministic transaction hash
+fn generate_tx_hash(seed: u64) -> [u8; 32] {
+    let mut hash = [0u8; 32];
+    for i in 0..32 {
+        hash[i] = ((seed + i as u64) % 256) as u8;
+    }
+    hash
+}
+
+/// Generate deterministic commitment
+fn generate_commitment(seed: u64) -> [u8; 32] {
+    let mut commitment = [0u8; 32];
+    for i in 0..32 {
+        commitment[i] = ((seed + i as u64 + 200) % 256) as u8;
+    }
+    commitment
+}

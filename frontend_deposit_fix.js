@@ -18,11 +18,11 @@ export const makeDeposit = async (amount, signer, contractAddress, contractABI) 
             gasLimit: 300000 // Explicit gas limit
         });
         
-        console.log("✅ Transaction sent:", tx.hash);
+        console.log(" Transaction sent:", tx.hash);
         
         // Wait for transaction confirmation
         const receipt = await tx.wait();
-        console.log("✅ Transaction confirmed:", receipt.transactionHash);
+        console.log(" Transaction confirmed:", receipt.transactionHash);
         
         return {
             success: true,
@@ -31,7 +31,7 @@ export const makeDeposit = async (amount, signer, contractAddress, contractABI) 
         };
         
     } catch (error) {
-        console.error("❌ Deposit failed:", error);
+        console.error(" Deposit failed:", error);
         
         // Handle specific error types
         if (error.code === 'INVALID_ARGUMENT') {
@@ -65,7 +65,7 @@ export const makeDepositWithCommitment = async (commitment, amount, signer, cont
         };
         
     } catch (error) {
-        console.error("❌ Deposit with commitment failed:", error);
+        console.error(" Deposit with commitment failed:", error);
         return {
             success: false,
             error: error.message

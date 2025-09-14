@@ -3,7 +3,7 @@
 //! Main entry point for the Privacy Pool REST API server.
 //! Integrates with existing UTXO and Merkle tree modules.
 
-use privacy_pool_zkvm::api::{ApiServer, ApiServerBuilder};
+use privacy_pool_zkvm::api::server::ApiServerBuilder;
 use std::env;
 use anyhow::Result;
 
@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
         .parse()
         .unwrap_or(true);
     
-    println!("🔐 Privacy Pool ZKVM API Server");
+    println!(" Privacy Pool ZKVM API Server");
     println!("===============================");
     println!();
     

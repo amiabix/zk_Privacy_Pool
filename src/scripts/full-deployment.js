@@ -7,7 +7,7 @@ const fs = require("fs");
  */
 
 async function main() {
-  console.log("🚀 Starting Full Privacy Pool Verifier Deployment");
+  console.log(" Starting Full Privacy Pool Verifier Deployment");
   console.log("=" .repeat(50));
   
   // Get network info
@@ -23,10 +23,10 @@ async function main() {
   // Check if we have enough balance
   const balance = await deployer.getBalance();
   if (balance < ethers.parseEther("0.1")) {
-    console.log("⚠️  Warning: Low balance. You may need more ETH for deployment.");
+    console.log("  Warning: Low balance. You may need more ETH for deployment.");
   }
   
-  console.log("\n📦 Step 1: Deploying PrivacyPoolVerifier Contract");
+  console.log("\n Step 1: Deploying PrivacyPoolVerifier Contract");
   console.log("-".repeat(40));
   
   // Deploy the contract
@@ -37,14 +37,14 @@ async function main() {
   await verifier.waitForDeployment();
   
   const verifierAddress = await verifier.getAddress();
-  console.log(`✅ Contract deployed to: ${verifierAddress}`);
+  console.log(` Contract deployed to: ${verifierAddress}`);
   
   // Get deployment transaction details
   const deploymentTx = verifier.deploymentTransaction();
-  console.log(`📄 Deployment TX: ${deploymentTx.hash}`);
-  console.log(`⛽ Gas Used: ${deploymentTx.gasLimit.toString()}`);
+  console.log(` Deployment TX: ${deploymentTx.hash}`);
+  console.log(` Gas Used: ${deploymentTx.gasLimit.toString()}`);
   
-  console.log("\n🔧 Step 2: Initializing Pool");
+  console.log("\n Step 2: Initializing Pool");
   console.log("-".repeat(40));
   
   // Initialize with empty state
@@ -56,39 +56,39 @@ async function main() {
   console.log("⏳ Waiting for initialization transaction...");
   await initTx.wait();
   
-  console.log("✅ Pool initialized successfully");
+  console.log(" Pool initialized successfully");
   
   // Verify initialization
   const [merkleRoot, poolBalance, nullifierCount] = await verifier.getPoolState();
-  console.log(`📊 Initial State:`);
+  console.log(` Initial State:`);
   console.log(`   Merkle Root: ${merkleRoot}`);
   console.log(`   Pool Balance: ${ethers.formatEther(poolBalance)} ETH`);
   console.log(`   Nullifier Count: ${nullifierCount}`);
   
-  console.log("\n🔍 Step 3: Contract Verification");
+  console.log("\n Step 3: Contract Verification");
   console.log("-".repeat(40));
   
   // Verify contract on block explorer (if not local network)
   if (network !== "localhost" && network !== "hardhat") {
-    console.log("🔍 Verifying contract on block explorer...");
+    console.log(" Verifying contract on block explorer...");
     
     try {
       await hre.run("verify:verify", {
         address: verifierAddress,
         constructorArguments: []
       });
-      console.log("✅ Contract verified successfully");
+      console.log(" Contract verified successfully");
     } catch (error) {
-      console.log("❌ Contract verification failed:");
+      console.log(" Contract verification failed:");
       console.log(`   Error: ${error.message}`);
-      console.log("💡 You can verify manually later with:");
+      console.log(" You can verify manually later with:");
       console.log(`   npx hardhat verify --network ${network} ${verifierAddress}`);
     }
   } else {
-    console.log("⏭️  Skipping verification for local network");
+    console.log("⏭  Skipping verification for local network");
   }
   
-  console.log("\n📋 Step 4: Saving Deployment Information");
+  console.log("\n Step 4: Saving Deployment Information");
   console.log("-".repeat(40));
   
   // Create deployments directory if it doesn't exist
@@ -121,9 +121,9 @@ async function main() {
   
   const filename = `deployments/${network}-${Date.now()}.json`;
   fs.writeFileSync(filename, JSON.stringify(deploymentInfo, null, 2));
-  console.log(`📄 Deployment info saved to: ${filename}`);
+  console.log(` Deployment info saved to: ${filename}`);
   
-  console.log("\n🎯 Step 5: Next Steps");
+  console.log("\n Step 5: Next Steps");
   console.log("-".repeat(40));
   
   console.log("1. Set ZisK Verifier Address:");
@@ -141,7 +141,7 @@ async function main() {
   console.log("\n5. Test Proof Verification:");
   console.log("   Use the verify-proof.js script to test with sample data");
   
-  console.log("\n🎉 Deployment Completed Successfully!");
+  console.log("\n Deployment Completed Successfully!");
   console.log("=" .repeat(50));
   console.log(`Contract Address: ${verifierAddress}`);
   console.log(`Network: ${network}`);
@@ -159,16 +159,16 @@ async function main() {
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error("\n❌ Deployment failed:");
+    console.error("\n Deployment failed:");
     console.error(error);
     
     // Provide helpful error messages
     if (error.message.includes("insufficient funds")) {
-      console.log("\n💡 Solution: Add more ETH to your account");
+      console.log("\n Solution: Add more ETH to your account");
     } else if (error.message.includes("network")) {
-      console.log("\n💡 Solution: Check your network configuration");
+      console.log("\n Solution: Check your network configuration");
     } else if (error.message.includes("gas")) {
-      console.log("\n💡 Solution: Increase gas limit or gas price");
+      console.log("\n Solution: Increase gas limit or gas price");
     }
     
     process.exit(1);

@@ -1,9 +1,5 @@
-#![no_main]
-// ZisK entrypoint for privacy pool transaction
+// Privacy pool transaction processor
 // This is a simplified version for demonstration
-
-// use ziskos::{read_input, set_output};
-use std::convert::TryInto;
 
 // Simple privacy pool transaction that works with ZisK
 #[derive(serde::Serialize, serde::Deserialize)]

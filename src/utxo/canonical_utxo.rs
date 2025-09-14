@@ -204,11 +204,12 @@ impl CanonicalUTXO {
         }
 
         // Calculate checksum over all data so far
-        let data_for_checksum = buffer.clone();
-        let checksum = canonical_spec::calculate_crc32(&data_for_checksum);
+        // Drop cursor to release mutable borrow
+        drop(cursor);
+        let checksum = canonical_spec::calculate_crc32(&buffer);
         
         // Checksum (4 bytes BE)
-        cursor.write_all(&checksum.to_be_bytes())?;
+        buffer.extend_from_slice(&checksum.to_be_bytes());
         
         Ok(buffer)
     }

@@ -2,35 +2,38 @@
 ziskos::entrypoint!(main);
 
 use privacy_pool_zkvm::utxo::UTXOTransaction;
-use privacy_pool_zkvm::privacy_pool::PrivacyPool;
+use privacy_pool_zkvm::privacy::{CompletePrivacyPoolExample, PrivacyPoolTransaction};
+use privacy_pool_zkvm::TransactionResult;
 use ziskos::{read_input, set_output};
 use std::convert::TryInto;
 
 fn main() {
     // Read single transaction from input
     let input: Vec<u8> = read_input();
-    let transaction: UTXOTransaction = bincode::deserialize(&input)
+    let transaction: PrivacyPoolTransaction = bincode::deserialize(&input)
         .expect("Failed to deserialize transaction");
-    
+
     // Create a minimal pool state for validation
-    let mut pool = PrivacyPool::new();
-    
+    let scope = [0u8; 32]; // Default scope for individual transaction validation
+    let mut pool = CompletePrivacyPoolExample::new(scope);
+
     // Compute transaction hash before processing
     let tx_hash = compute_transaction_hash(&transaction);
-    
+
     // Process the single transaction
-    let result = pool.process_transaction(transaction).unwrap_or_else(|e| {
-        privacy_pool_zkvm::transaction::TransactionResult::Failure(format!("{:?}", e))
-    });
-    
+    let result = match pool.process_transaction(&transaction) {
+        Ok(true) => TransactionResult::Success,
+        Ok(false) | Err(_) => TransactionResult::Failure("Transaction validation failed".to_string()),
+    };
+
     // Output only essential validation results
     match result {
-        privacy_pool_zkvm::transaction::TransactionResult::Success => {
+        TransactionResult::Success => {
             // Transaction is valid - output success flag
             set_output(0, 1); // Success flag
             set_output(1, 0); // Error code (none)
         }
-        privacy_pool_zkvm::transaction::TransactionResult::Failure(_) => {
+        TransactionResult::Failure(_) => {
             // Transaction is invalid - output failure flag
             set_output(0, 0); // Failure flag
             set_output(1, 1); // Error code (validation failed)
@@ -44,23 +47,24 @@ fn main() {
     }
 }
 
-fn compute_transaction_hash(tx: &UTXOTransaction) -> [u8; 32] {
+fn compute_transaction_hash(tx: &PrivacyPoolTransaction) -> [u8; 32] {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
-    
-    // Hash all input commitments
-    for input in &tx.inputs {
-        hasher.update(&input.utxo.commitment);
-    }
-    
-    // Hash all output values and recipients
-    for output in &tx.outputs {
-        hasher.update(&output.value.to_le_bytes());
-        hasher.update(&output.recipient);
-    }
-    
-    // Hash fee
-    hasher.update(&tx.fee.to_le_bytes());
-    
+
+    // Hash transaction type
+    hasher.update(&[tx.transaction_type as u8]);
+
+    // Hash value
+    hasher.update(&tx.value.to_le_bytes());
+
+    // Hash recipient
+    hasher.update(&tx.recipient);
+
+    // Hash commitment
+    hasher.update(&tx.commitment);
+
+    // Hash nullifier
+    hasher.update(&tx.nullifier);
+
     hasher.finalize().into()
 }

@@ -2,8 +2,7 @@
 //! 
 //! Request logging, CORS, and other middleware components
 
-use tower_http::cors::{CorsLayer, Any};
-use std::time::Duration;
+use tower_http::cors::CorsLayer;
 
 /// Create basic logging layer (simplified)
 pub fn create_logging_layer() -> tower::layer::util::Identity {

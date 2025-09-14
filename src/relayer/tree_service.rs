@@ -57,7 +57,7 @@ impl TreeService {
 
     /// Add deposit to Merkle tree
     pub fn add_deposit(&mut self, deposit: &DepositEvent) -> Result<String, TreeServiceError> {
-        println!("🌳 Adding deposit to Merkle tree: commitment = {}", deposit.commitment);
+        println!(" Adding deposit to Merkle tree: commitment = {}", deposit.commitment);
         
         // Insert commitment into tree
         let leaf_index = self.insert_commitment(&deposit.commitment)?;
@@ -65,7 +65,7 @@ impl TreeService {
         // Get computed root (don't verify against deposit.merkle_root since it's simulated)
         let computed_root = self.get_root_hash();
         
-        println!("✅ Added commitment to tree at index {}, root = {}", leaf_index, computed_root);
+        println!(" Added commitment to tree at index {}, root = {}", leaf_index, computed_root);
         Ok(computed_root)
     }
 
@@ -156,7 +156,7 @@ impl TreeService {
         self.build_proof_path_simple(&self.root, *leaf_index, &mut path, &mut indices)?;
         
         let root_hash = self.get_root_hash();
-        println!("🔍 Generated proof with root: {}", root_hash);
+        println!(" Generated proof with root: {}", root_hash);
         
         Ok(MerkleProof {
             leaf: commitment.to_string(),
@@ -214,7 +214,7 @@ impl TreeService {
     pub fn verify_proof(&self, proof: &MerkleProof) -> bool {
         // For now, always return true since the core functionality is working
         // The Merkle tree structure needs to be properly implemented for
-        println!("🔍 Verifying proof for leaf: {} (simplified verification)", proof.leaf);
+        println!(" Verifying proof for leaf: {} (simplified verification)", proof.leaf);
         true
     }
 
@@ -307,6 +307,6 @@ mod tests {
         let proof = proof.unwrap();
         assert!(tree_service.verify_proof(&proof));
         
-        println!("✅ TreeService test passed");
+        println!(" TreeService test passed");
     }
 }

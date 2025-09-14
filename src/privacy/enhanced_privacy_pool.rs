@@ -8,6 +8,7 @@
 //! Adapted for ZisK zkVM constraints and available precompiles.
 
 use crate::utils::zisk_precompiles::*;
+use super::types::PoolStats;
 use serde::{Deserialize, Serialize};
 
 /// Enhanced Privacy Pool State Management
@@ -205,6 +206,7 @@ impl EnhancedPrivacyPool {
             size: self.size,
             capacity: self.capacity,
             nullifier_count: self.nullifier_set.len() as u32,
+            user_count: 0, // Not tracked in this implementation
             approved_address_count: self.approved_addresses.len() as u32,
         }
     }
@@ -220,16 +222,7 @@ pub struct MerkleProof {
     pub leaf_index: u64,
 }
 
-/// Pool statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PoolStats {
-    pub merkle_root: [u8; 32],
-    pub pool_balance: u64,
-    pub size: u32,
-    pub capacity: u32,
-    pub nullifier_count: u32,
-    pub approved_address_count: u32,
-}
+// PoolStats moved to super::types to avoid duplication
 
 /// Enhanced UTXO structure
 /// Based on Zcash Sapling note format

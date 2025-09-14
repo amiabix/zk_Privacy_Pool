@@ -2,7 +2,7 @@
 //! This module connects to the actual deployed contracts and processes real ETH deposits
 
 use web3::{
-    types::{Address, BlockNumber, Filter, Log, TransactionRequest, U256, H256, TransactionParameters, Bytes},
+    types::{Address, Log, TransactionRequest, U256, H256, TransactionParameters, Bytes},
     Web3, transports::Http, signing::SecretKey,
 };
 use std::str::FromStr;
@@ -114,11 +114,11 @@ impl BlockchainClient {
 
     /// Fetch deposit events from the blockchain
     pub async fn fetch_deposit_events(&self, from_block: u64, to_block: u64) -> Result<Vec<DepositEvent>> {
-        println!("🔍 Fetching real deposit events from block {} to {}", from_block, to_block);
+        println!(" Fetching real deposit events from block {} to {}", from_block, to_block);
         
         // For now, we'll simulate event fetching since the Filter API is complex
         // In a implementation, you would use proper event filtering
-        println!("   📝 Note: Event filtering needs proper implementation for production");
+        println!("    Note: Event filtering needs proper implementation for production");
         
         // Return empty events for now - this would be replaced with actual event fetching
         let logs = vec![];
@@ -176,7 +176,7 @@ impl BlockchainClient {
         while attempts < max_attempts {
             if let Some(receipt) = self.web3.eth().transaction_receipt(tx_hash).await? {
                 if receipt.status == Some(web3::types::U64::from(1)) {
-                    println!("✅ Transaction confirmed: {:?}", tx_hash);
+                    println!(" Transaction confirmed: {:?}", tx_hash);
                     return Ok(());
                 } else {
                     return Err(anyhow!("Transaction failed"));
@@ -367,7 +367,7 @@ impl DepositManager {
             return Ok(vec![]);
         }
 
-        println!("🔍 Fetching real deposit events from block {} to {}", 
+        println!(" Fetching real deposit events from block {} to {}", 
                  self.last_processed_block + 1, current_block);
 
         let events = self.blockchain_client
@@ -376,9 +376,9 @@ impl DepositManager {
 
         self.last_processed_block = current_block;
         
-        println!("📥 Found {} real deposit events", events.len());
+        println!(" Found {} real deposit events", events.len());
         for event in &events {
-            println!("   💰 {} deposited {} ETH (Commitment: {:?})", 
+            println!("    {} deposited {} ETH (Commitment: {:?})", 
                      event.depositor, 
                      event.value.as_u64() as f64 / 1e18,
                      event.commitment);
@@ -389,7 +389,7 @@ impl DepositManager {
 
     /// Send real ETH deposit with proper signing
     pub async fn send_real_deposit(&self, wallet: &Wallet, value_wei: U256) -> Result<H256> {
-        println!("💸 Sending {} ETH from {} to privacy pool...", 
+        println!(" Sending {} ETH from {} to privacy pool...", 
                  value_wei.as_u64() as f64 / 1e18, wallet.name);
 
         // Encode the deposit function call using proper ABI encoding
@@ -428,7 +428,7 @@ impl DepositManager {
         // Send signed transaction
         let tx_hash = self.account_manager.send_signed_transaction(wallet, tx_params).await?;
         
-        println!("📤 Transaction sent: {:?}", tx_hash);
+        println!(" Transaction sent: {:?}", tx_hash);
         
         // Wait for confirmation
         self.blockchain_client.wait_for_transaction(tx_hash).await?;
@@ -438,11 +438,11 @@ impl DepositManager {
 
     /// Fund a wallet from the Anvil faucet
     pub async fn fund_wallet(&self, wallet: &Wallet, amount_wei: U256) -> Result<H256> {
-        println!("💰 Funding {} with {} ETH...", wallet.name, amount_wei.as_u64() as f64 / 1e18);
+        println!(" Funding {} with {} ETH...", wallet.name, amount_wei.as_u64() as f64 / 1e18);
         
         let tx_hash = self.account_manager.fund_wallet(wallet, amount_wei).await?;
         
-        println!("✅ Funding transaction: {:?}", tx_hash);
+        println!(" Funding transaction: {:?}", tx_hash);
         
         // Wait for confirmation
         self.blockchain_client.wait_for_transaction(tx_hash).await?;
@@ -462,12 +462,12 @@ mod tests {
         let client = BlockchainClient::new(config).expect("Failed to create blockchain client");
         
         let current_block = client.get_current_block_number().await.expect("Failed to get block number");
-        println!("✅ Connected to Anvil at block: {}", current_block);
+        println!(" Connected to Anvil at block: {}", current_block);
         
         // Test getting balance of the default Anvil account
         let default_account = Address::from_str("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266").unwrap();
         let balance = client.get_balance(default_account).await.expect("Failed to get balance");
-        println!("💰 Default account balance: {} ETH", balance.as_u64() as f64 / 1e18);
+        println!(" Default account balance: {} ETH", balance.as_u64() as f64 / 1e18);
     }
 
     #[tokio::test]
@@ -481,19 +481,19 @@ mod tests {
             Wallet::new("Charlie", [0x03; 32]).expect("Failed to create Charlie wallet"),
         ];
 
-        println!("🚀 Starting real deposit flow test...");
+        println!(" Starting real deposit flow test...");
 
         // Send real deposits
         for wallet in &wallets {
             let value_wei = U256::from(1_000_000_000_000_000_000u64); // 1 ETH
             match manager.send_real_deposit(wallet, value_wei).await {
-                Ok(tx_hash) => println!("✅ {} deposit successful: {:?}", wallet.name, tx_hash),
-                Err(e) => println!("❌ {} deposit failed: {}", wallet.name, e),
+                Ok(tx_hash) => println!(" {} deposit successful: {:?}", wallet.name, tx_hash),
+                Err(e) => println!(" {} deposit failed: {}", wallet.name, e),
             }
         }
 
         // Process the deposits
         let events = manager.process_real_deposits().await.expect("Failed to process deposits");
-        println!("📊 Processed {} real deposit events", events.len());
+        println!(" Processed {} real deposit events", events.len());
     }
 }

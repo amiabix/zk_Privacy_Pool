@@ -1,10 +1,10 @@
-# 🚀 IMMEDIATE FRONTEND FIX - No More Ambiguity!
+#  IMMEDIATE FRONTEND FIX - No More Ambiguity!
 
-## ✅ NEW CONTRACT DEPLOYED SUCCESSFULLY!
+##  NEW CONTRACT DEPLOYED SUCCESSFULLY!
 
 **New Contract Address (Sepolia):** `0x19B8743Df3E8997489b50F455a1cAe3536C0ee31`
 
-## 🔧 Quick Fix for Your Frontend
+##  Quick Fix for Your Frontend
 
 ### 1. Update Contract Address
 
@@ -45,17 +45,17 @@ const makeDeposit = async (amount) => {
             gasLimit: 300000
         });
         
-        console.log("✅ Deposit successful:", tx.hash);
+        console.log(" Deposit successful:", tx.hash);
         return await tx.wait();
         
     } catch (error) {
-        console.error("❌ Deposit failed:", error);
+        console.error(" Deposit failed:", error);
         throw error;
     }
 };
 ```
 
-## 📋 New Contract Functions
+##  New Contract Functions
 
 The new contract has these **unambiguous** function names:
 
@@ -66,7 +66,7 @@ The new contract has these **unambiguous** function names:
 - `getCurrentMerkleRoot()` - Get current Merkle root
 - `withdraw(bytes32, address, uint256)` - Withdraw funds
 
-## 🎯 New Contract ABI
+##  New Contract ABI
 
 Copy this ABI for your frontend (also saved in `PrivacyPoolFixed-ABI.json`):
 
@@ -85,7 +85,7 @@ const contractABI = [
 ];
 ```
 
-## 🚀 Test the Fix
+##  Test the Fix
 
 1. Update your frontend with:
    - New contract address: `0x19B8743Df3E8997489b50F455a1cAe3536C0ee31`
@@ -94,12 +94,12 @@ const contractABI = [
 
 2. Try depositing 0.1 ETH - it should work without any ambiguity errors!
 
-## ✅ Verification
+##  Verification
 
 The contract is deployed and ready:
 - **Address:** `0x19B8743Df3E8997489b50F455a1cAe3536C0ee31`
 - **Network:** Sepolia Testnet
-- **Status:** ✅ Deployed and verified
+- **Status:**  Deployed and verified
 - **Initial Merkle Root:** `0x04735efbce809c030d37ba49c991137ee9bae0681dd865766a2c50dd1c301282`
 
 **No more function ambiguity - this will fix your deposit issue immediately!**

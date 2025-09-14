@@ -31,7 +31,7 @@ async fn verify_transaction_on_blockchain(
     rpc_url: &str,
     expected_contract_address: &str,
 ) -> Result<BlockchainTransactionData> {
-    println!("🔍 Verifying transaction {} on blockchain...", tx_hash);
+    println!(" Verifying transaction {} on blockchain...", tx_hash);
 
     let client = reqwest::Client::new();
 
@@ -138,7 +138,7 @@ async fn verify_transaction_on_blockchain(
         .unwrap_or("0x0")
         .to_string();
 
-    println!("✅ BLOCKCHAIN VERIFICATION SUCCESS!");
+    println!(" BLOCKCHAIN VERIFICATION SUCCESS!");
     println!("   - Value: {} ETH ({} wei)", value_eth, value_wei);
     println!("   - From: {}", from_address);
     println!("   - To Contract: {}", to_address);
@@ -213,7 +213,7 @@ const SEPOLIA_RPC_URL: &str = "https://eth-sepolia.g.alchemy.com/v2/wdp1FpAvY5GB
 const CONTRACT_ADDRESS: &str = "0x19B8743Df3E8997489b50F455a1cAe3536C0ee31";
 
 async fn process_verified_deposit(request: DepositRequest) -> Result<DepositResponse, String> {
-    println!("🚀 PROCESSING BLOCKCHAIN-VERIFIED DEPOSIT");
+    println!(" PROCESSING BLOCKCHAIN-VERIFIED DEPOSIT");
     println!("   Transaction Hash: {}", request.tx_hash);
 
     // STEP 1: VERIFY ON BLOCKCHAIN (THE FIX!)
@@ -224,7 +224,7 @@ async fn process_verified_deposit(request: DepositRequest) -> Result<DepositResp
     ).await {
         Ok(data) => data,
         Err(e) => {
-            println!("❌ BLOCKCHAIN VERIFICATION FAILED: {}", e);
+            println!(" BLOCKCHAIN VERIFICATION FAILED: {}", e);
             return Err(format!("Blockchain verification failed: {}", e));
         }
     };
@@ -245,7 +245,7 @@ async fn process_verified_deposit(request: DepositRequest) -> Result<DepositResp
             .as_secs(),
     };
 
-    println!("🎉 VERIFIED UTXO CREATED!");
+    println!(" VERIFIED UTXO CREATED!");
     println!("   UTXO ID: {}", utxo.utxo_id);
     println!("   Value: {} ETH", blockchain_data.value_eth);
     println!("   Verified: {}", utxo.verified_on_blockchain);
@@ -267,7 +267,7 @@ async fn process_verified_deposit(request: DepositRequest) -> Result<DepositResp
 }
 
 async fn test_api_with_real_transaction() {
-    println!("🧪 TESTING BLOCKCHAIN-VERIFIED API");
+    println!(" TESTING BLOCKCHAIN-VERIFIED API");
     println!("===================================");
 
     // Example deposit request (you would replace with a real transaction hash)
@@ -281,7 +281,7 @@ async fn test_api_with_real_transaction() {
         precommitment_hash: None,
     };
 
-    println!("📋 Test Request:");
+    println!(" Test Request:");
     println!("   TX Hash: {}", deposit_request.tx_hash);
     println!("   Amount: {} wei", deposit_request.amount);
     println!();
@@ -289,13 +289,13 @@ async fn test_api_with_real_transaction() {
     // Process the deposit with blockchain verification
     match process_verified_deposit(deposit_request).await {
         Ok(response) => {
-            println!("✅ DEPOSIT PROCESSED SUCCESSFULLY!");
+            println!(" DEPOSIT PROCESSED SUCCESSFULLY!");
             println!("   UTXO ID: {}", response.utxo_id);
             println!("   Blockchain Verified: {}", response.blockchain_verified);
             println!("   Root: {}", response.new_root);
         }
         Err(e) => {
-            println!("❌ DEPOSIT FAILED: {}", e);
+            println!(" DEPOSIT FAILED: {}", e);
             println!("   This is EXPECTED if using a fake transaction hash");
             println!("   In production, use a REAL transaction hash from Sepolia");
         }
@@ -308,14 +308,14 @@ async fn test_api_with_real_transaction() {
 
 #[tokio::main]
 async fn main() {
-    println!("🔐 BLOCKCHAIN-VERIFIED Privacy Pool API");
+    println!(" BLOCKCHAIN-VERIFIED Privacy Pool API");
     println!("========================================");
     println!();
-    println!("🚨 THE BIG FIX:");
-    println!("   ❌ Before: API created fake UTXOs without checking blockchain");
-    println!("   ✅ After:  API verifies REAL transactions on Sepolia before creating UTXOs");
+    println!(" THE BIG FIX:");
+    println!("    Before: API created fake UTXOs without checking blockchain");
+    println!("    After:  API verifies REAL transactions on Sepolia before creating UTXOs");
     println!();
-    println!("📊 Configuration:");
+    println!(" Configuration:");
     println!("   RPC URL: {}", SEPOLIA_RPC_URL);
     println!("   Contract: {}", CONTRACT_ADDRESS);
     println!();
@@ -324,7 +324,7 @@ async fn main() {
     test_api_with_real_transaction().await;
 
     println!();
-    println!("🎯 SUMMARY:");
+    println!(" SUMMARY:");
     println!("   The API now calls verify_transaction_on_blockchain() which:");
     println!("   1. Calls eth_getTransactionByHash on Sepolia");
     println!("   2. Verifies the transaction went to our contract");
@@ -332,7 +332,7 @@ async fn main() {
     println!("   4. Extracts the REAL ETH amount sent");
     println!("   5. Only creates UTXO if blockchain verification succeeds");
     println!();
-    println!("✅ The fake UTXO problem is SOLVED!");
+    println!(" The fake UTXO problem is SOLVED!");
 }
 
 // Dummy dependencies to make this compile

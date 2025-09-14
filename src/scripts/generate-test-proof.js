@@ -7,11 +7,11 @@ const fs = require("fs");
  */
 
 async function generateTestProofData() {
-  console.log("🔧 Generating Test Proof Data for Privacy Pool Verifier");
+  console.log(" Generating Test Proof Data for Privacy Pool Verifier");
   console.log("=" .repeat(60));
   
   // Simulate ZisK proof generation
-  console.log("📝 Step 1: Simulating ZisK Proof Generation");
+  console.log(" Step 1: Simulating ZisK Proof Generation");
   console.log("-".repeat(40));
   
   // Create sample transaction data
@@ -37,25 +37,25 @@ async function generateTestProofData() {
     fee: ethers.parseEther("0.001") // 0.001 ETH
   };
   
-  console.log("✅ Transaction data generated");
+  console.log(" Transaction data generated");
   console.log(`   Input commitments: ${transactionData.inputCommitments.length}`);
   console.log(`   Output commitments: ${transactionData.outputCommitments.length}`);
   console.log(`   Nullifiers: ${transactionData.nullifiers.length}`);
   console.log(`   Fee: ${ethers.formatEther(transactionData.fee)} ETH`);
   
-  console.log("\n🔢 Step 2: Generating ZisK Public Inputs");
+  console.log("\n Step 2: Generating ZisK Public Inputs");
   console.log("-".repeat(40));
   
   // Simulate ZisK output (23 u32 values)
   const ziskOutputs = generateZiskOutputs(transactionData);
-  console.log("✅ ZisK outputs generated");
+  console.log(" ZisK outputs generated");
   console.log(`   Validation result: ${ziskOutputs[0]}`);
   console.log(`   Merkle valid: ${ziskOutputs[1]}`);
   console.log(`   No double spend: ${ziskOutputs[2]}`);
   console.log(`   Signature valid: ${ziskOutputs[3]}`);
   console.log(`   Balance valid: ${ziskOutputs[4]}`);
   
-  console.log("\n🔐 Step 3: Creating Proof Data Structure");
+  console.log("\n Step 3: Creating Proof Data Structure");
   console.log("-".repeat(40));
   
   const proofData = {
@@ -63,11 +63,11 @@ async function generateTestProofData() {
     proof: generateMockProof() // Mock ZK proof
   };
   
-  console.log("✅ Proof data structure created");
+  console.log(" Proof data structure created");
   console.log(`   Public inputs: ${proofData.publicInputs.length} u32 values`);
   console.log(`   Proof length: ${proofData.proof.length} bytes`);
   
-  console.log("\n💾 Step 4: Saving Test Data");
+  console.log("\n Step 4: Saving Test Data");
   console.log("-".repeat(40));
   
   const testData = {
@@ -82,9 +82,9 @@ async function generateTestProofData() {
   
   const filename = `test-data-${Date.now()}.json`;
   fs.writeFileSync(filename, JSON.stringify(testData, null, 2));
-  console.log(`📄 Test data saved to: ${filename}`);
+  console.log(` Test data saved to: ${filename}`);
   
-  console.log("\n🧪 Step 5: Testing Contract Integration");
+  console.log("\n Step 5: Testing Contract Integration");
   console.log("-".repeat(40));
   
   // Test with deployed contract (if available)
@@ -94,19 +94,19 @@ async function generateTestProofData() {
       const latestDeployment = deploymentFiles[deploymentFiles.length - 1];
       const deploymentInfo = JSON.parse(fs.readFileSync(`./deployments/${latestDeployment}`, "utf8"));
       
-      console.log(`🔗 Found deployment: ${latestDeployment}`);
+      console.log(` Found deployment: ${latestDeployment}`);
       console.log(`   Contract: ${deploymentInfo.verifierAddress}`);
       
       // Test contract interaction
       await testContractInteraction(deploymentInfo.verifierAddress, proofData, transactionData);
     } else {
-      console.log("⏭️  No deployment found. Deploy contract first to test integration.");
+      console.log("⏭  No deployment found. Deploy contract first to test integration.");
     }
   } catch (error) {
-    console.log("⚠️  Could not test contract integration:", error.message);
+    console.log("  Could not test contract integration:", error.message);
   }
   
-  console.log("\n🎉 Test Proof Data Generation Complete!");
+  console.log("\n Test Proof Data Generation Complete!");
   console.log("=" .repeat(60));
   console.log(`Test data file: ${filename}`);
   console.log("\nNext steps:");
@@ -165,7 +165,7 @@ function generateMockProof() {
 
 async function testContractInteraction(contractAddress, proofData, transactionData) {
   try {
-    console.log("🔗 Testing contract interaction...");
+    console.log(" Testing contract interaction...");
     
     // Connect to deployed contract
     const PrivacyPoolVerifier = await ethers.getContractFactory("PrivacyPoolVerifier");
@@ -180,15 +180,15 @@ async function testContractInteraction(contractAddress, proofData, transactionDa
     // Check if ZisK verifier is set
     const ziskVerifier = await verifier.ziskVerifier();
     if (ziskVerifier === ethers.ZeroAddress) {
-      console.log("⚠️  ZisK verifier not set. Set it first before testing proof verification.");
+      console.log("  ZisK verifier not set. Set it first before testing proof verification.");
     } else {
       console.log(`   ZisK Verifier: ${ziskVerifier}`);
     }
     
-    console.log("✅ Contract interaction test completed");
+    console.log(" Contract interaction test completed");
     
   } catch (error) {
-    console.log("❌ Contract interaction test failed:", error.message);
+    console.log(" Contract interaction test failed:", error.message);
   }
 }
 
@@ -197,7 +197,7 @@ if (require.main === module) {
   generateTestProofData()
     .then(() => process.exit(0))
     .catch((error) => {
-      console.error("❌ Script failed:", error);
+      console.error(" Script failed:", error);
       process.exit(1);
     });
 }

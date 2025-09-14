@@ -122,7 +122,7 @@ pub async fn process_deposit(
     State(state): State<AppState>,
     Json(request): Json<DepositRequest>,
 ) -> std::result::Result<Json<DepositResponse>, (StatusCode, Json<ErrorResponse>)> {
-    println!("🔍 VERIFYING BLOCKCHAIN TRANSACTION: {}", request.tx_hash);
+    println!(" VERIFYING BLOCKCHAIN TRANSACTION: {}", request.tx_hash);
 
     // STEP 1: VERIFY THE TRANSACTION EXISTS ON BLOCKCHAIN
     let transaction_data = match verify_transaction_on_blockchain(
@@ -132,12 +132,12 @@ pub async fn process_deposit(
     ).await {
         Ok(data) => data,
         Err(e) => {
-            println!("❌ BLOCKCHAIN VERIFICATION FAILED: {}", e);
+            println!(" BLOCKCHAIN VERIFICATION FAILED: {}", e);
             return Err(api_error("BLOCKCHAIN_VERIFICATION_FAILED", &e.to_string()));
         }
     };
 
-    println!("✅ TRANSACTION VERIFIED ON BLOCKCHAIN");
+    println!(" TRANSACTION VERIFIED ON BLOCKCHAIN");
     println!("   - Value: {} ETH", transaction_data.value_eth);
     println!("   - From: {}", transaction_data.from_address);
     println!("   - To Contract: {}", transaction_data.to_address);
@@ -222,7 +222,7 @@ pub async fn process_deposit(
         *tree_root = crate::canonical_spec::generate_node_hash(*tree_root, leaf_hash);
     }
 
-    println!("🎉 UTXO CREATED FROM VERIFIED BLOCKCHAIN DEPOSIT!");
+    println!(" UTXO CREATED FROM VERIFIED BLOCKCHAIN DEPOSIT!");
 
     let response = DepositResponse {
         success: true,

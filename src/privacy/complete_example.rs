@@ -9,9 +9,9 @@
 use crate::{
     utils::redjubjub::*,
     merkle::tornado_merkle_tree::*,
-    utxo::{UTXOInput, UTXOOutput, UTXOTransaction, MerkleProof as UTXOMerkleProof, UTXO, UTXOIndex, IndexedUTXO, UTXOId},
-    privacy::enhanced_privacy_pool::{EnhancedPrivacyPool, MerkleProof as EnhancedMerkleProof, PoolStats},
-    utils::zisk_precompiles::*,
+    utxo::{UTXOInput, UTXOOutput, MerkleProof as UTXOMerkleProof, UTXO, UTXOIndex, IndexedUTXO, UTXOId},
+    privacy::enhanced_privacy_pool::{EnhancedPrivacyPool, MerkleProof as EnhancedMerkleProof},
+    privacy::types::PoolStats,
 };
 
 /// Complete Privacy Pool Example
@@ -554,7 +554,7 @@ mod tests {
 
         // Check stats
         let stats = example.get_stats();
-        assert!(stats.utxo_stats.total_utxos > 0);
+        assert!(stats.utxo_stats.get_all_utxos().len() > 0);
         assert!(stats.pool_stats.pool_balance > 0);
     }
 
@@ -580,19 +580,29 @@ mod tests {
 
     #[test]
     fn test_utxo_system_integration() {
-        let mut utxo_set = UTXOSet::new();
+        let mut utxo_set = UTXOIndex::new();
         let utxo = UTXO::new(
-            0,
             1000,
             [1u8; 32],
             [2u8; 32],
             [3u8; 32],
             [4u8; 32],
+            [5u8; 32],
             100,
         );
         
-        utxo_set.add_utxo(utxo);
-        let stats = utxo_set.get_stats();
-        assert_eq!(stats.total_utxos, 1);
+        // Convert UTXO to IndexedUTXO
+        let indexed_utxo = IndexedUTXO {
+            id: UTXOId::new(utxo.commitment, utxo.index.try_into().unwrap()),
+            account_id: 1,
+            address: utxo.owner,
+            value: utxo.value,
+            height: 1,
+            spent_in_tx: None,
+            blinding_factor: utxo.blinding_factor,
+        };
+        utxo_set.add_utxo(indexed_utxo);
+        let utxos = utxo_set.get_all_utxos();
+        assert_eq!(utxos.len(), 1);
     }
 }

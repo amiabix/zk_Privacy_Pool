@@ -1,0 +1,184 @@
+//! API Server Implementation
+//! 
+//! Main server setup with configuration and graceful shutdown
+
+use axum::{Router, serve};
+use std::net::SocketAddr;
+use tokio::net::TcpListener;
+use tower::ServiceBuilder;
+use tower_http::cors::CorsLayer;
+use anyhow::Result;
+
+use crate::api::{handlers, middleware};
+
+/// API Server configuration
+#[derive(Debug, Clone)]
+pub struct ServerConfig {
+    /// Server bind address
+    pub bind_addr: SocketAddr,
+    /// Maximum request size in bytes
+    pub max_request_size: usize,
+    /// Request timeout in seconds
+    pub request_timeout: u64,
+    /// Enable request logging
+    pub enable_logging: bool,
+}
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            bind_addr: "127.0.0.1:3000".parse().unwrap(),
+            max_request_size: 1024 * 1024, // 1MB
+            request_timeout: 30,
+            enable_logging: true,
+        }
+    }
+}
+
+/// Main API Server
+pub struct ApiServer {
+    config: ServerConfig,
+    router: Router,
+}
+
+impl ApiServer {
+    /// Create new API server with configuration
+    pub fn new(config: ServerConfig) -> Result<Self> {
+        let router = Self::create_router(&config)?;
+        
+        Ok(Self {
+            config,
+            router,
+        })
+    }
+    
+    /// Create new API server with default configuration
+    pub fn with_defaults() -> Result<Self> {
+        Self::new(ServerConfig::default())
+    }
+    
+    /// Create the main router with all middleware and routes
+    fn create_router(config: &ServerConfig) -> Result<Router> {
+        // Create base router with handlers
+        let app_router = handlers::create_router()?;
+        
+        // Build middleware stack
+        let service_builder = ServiceBuilder::new();
+        
+        // Add CORS middleware
+        let cors_layer = CorsLayer::permissive(); // Allow all origins for development
+        let service_builder = service_builder.layer(cors_layer);
+        
+        // Add request logging if enabled
+        let service_builder = if config.enable_logging {
+            service_builder.layer(middleware::create_logging_layer())
+        } else {
+            service_builder.layer(tower::layer::util::Identity::new())
+        };
+        
+        // Skip timeout layer for now - can be added later
+        
+        // Apply middleware to router
+        Ok(app_router.layer(service_builder))
+    }
+    
+    /// Start the server
+    pub async fn start(self) -> Result<()> {
+        println!("🚀 Privacy Pool API Server starting...");
+        println!("📍 Listening on: http://{}", self.config.bind_addr);
+        println!("⚙️  Configuration:");
+        println!("   - Max request size: {} bytes", self.config.max_request_size);
+        println!("   - Request timeout: {}s", self.config.request_timeout);
+        println!("   - Logging enabled: {}", self.config.enable_logging);
+        println!();
+        println!("📋 Available endpoints:");
+        println!("   GET  /api/health          - Health check");
+        println!("   POST /api/deposit         - Process ETH deposit");
+        println!("   GET  /api/balance/:owner  - Get owner balance");
+        println!("   GET  /api/utxos/:owner    - Get owner UTXOs");
+        println!("   GET  /api/utxo/:utxo_id   - Get UTXO details");
+        println!("   GET  /api/tree/stats      - Get tree statistics");
+        println!("   GET  /api/tree/root       - Get current tree root");
+        println!();
+        
+        // Create TCP listener
+        let listener = TcpListener::bind(&self.config.bind_addr).await?;
+        
+        // Start server with graceful shutdown
+        serve(listener, self.router)
+            .with_graceful_shutdown(Self::shutdown_signal())
+            .await?;
+            
+        println!("🛑 Server stopped gracefully");
+        Ok(())
+    }
+    
+    /// Handle graceful shutdown
+    async fn shutdown_signal() {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to install CTRL+C signal handler");
+        
+        println!("\n🛑 Received shutdown signal, stopping server...");
+    }
+    
+    /// Get server configuration
+    pub fn config(&self) -> &ServerConfig {
+        &self.config
+    }
+}
+
+/// Builder for API server configuration
+pub struct ApiServerBuilder {
+    config: ServerConfig,
+}
+
+impl ApiServerBuilder {
+    /// Create new builder with default configuration
+    pub fn new() -> Self {
+        Self {
+            config: ServerConfig::default(),
+        }
+    }
+    
+    /// Set bind address
+    pub fn bind_addr(mut self, addr: SocketAddr) -> Self {
+        self.config.bind_addr = addr;
+        self
+    }
+    
+    /// Set bind address from string
+    pub fn bind(mut self, addr: &str) -> Result<Self> {
+        self.config.bind_addr = addr.parse()?;
+        Ok(self)
+    }
+    
+    /// Set maximum request size
+    pub fn max_request_size(mut self, size: usize) -> Self {
+        self.config.max_request_size = size;
+        self
+    }
+    
+    /// Set request timeout
+    pub fn request_timeout(mut self, timeout_secs: u64) -> Self {
+        self.config.request_timeout = timeout_secs;
+        self
+    }
+    
+    /// Enable or disable logging
+    pub fn logging(mut self, enabled: bool) -> Self {
+        self.config.enable_logging = enabled;
+        self
+    }
+    
+    /// Build the API server
+    pub fn build(self) -> Result<ApiServer> {
+        ApiServer::new(self.config)
+    }
+}
+
+impl Default for ApiServerBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}

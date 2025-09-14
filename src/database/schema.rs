@@ -23,6 +23,8 @@ pub mod cf_names {
     pub const ROOT_HISTORY: &str = "cf_root_history";
     pub const BLOCK_INDEX: &str = "cf_block_index";
     pub const TREE_METADATA: &str = "cf_tree_metadata";
+    pub const ENCRYPTED_NOTES: &str = "cf_encrypted_notes";
+    pub const WALLET_NOTES: &str = "cf_wallet_notes";
 }
 
 /// Database configuration for deployment
@@ -227,6 +229,32 @@ impl CFConfig {
             optimize_for_point_lookup: true,
         }
     }
+    
+    /// Configuration for cf_encrypted_notes (relayer storage)
+    pub fn encrypted_notes() -> Self {
+        Self {
+            name: cf_names::ENCRYPTED_NOTES.to_string(),
+            write_buffer_size: 64 * 1024 * 1024, // Larger buffer for encrypted data
+            enable_bloom_filter: true,
+            compaction_style: DBCompactionStyle::Level,
+            target_file_size_base: 32 * 1024 * 1024,
+            compression_type: rocksdb::DBCompressionType::Lz4,
+            optimize_for_point_lookup: true,
+        }
+    }
+    
+    /// Configuration for cf_wallet_notes (client storage)
+    pub fn wallet_notes() -> Self {
+        Self {
+            name: cf_names::WALLET_NOTES.to_string(),
+            write_buffer_size: 32 * 1024 * 1024,
+            enable_bloom_filter: true,
+            compaction_style: DBCompactionStyle::Level,
+            target_file_size_base: 16 * 1024 * 1024,
+            compression_type: rocksdb::DBCompressionType::Lz4,
+            optimize_for_point_lookup: true,
+        }
+    }
 
     /// Create RocksDB Options from configuration
     pub fn to_options(&self, shared_cache: &Cache) -> Options {
@@ -261,7 +289,7 @@ impl CFConfig {
 pub struct DatabaseManager {
     db: Arc<DB>,
     config: DBConfig,
-    column_families: HashMap<String, Arc<rocksdb::ColumnFamily>>,
+    column_families: HashMap<String, String>,
     block_cache: Cache,
 }
 
@@ -271,7 +299,7 @@ impl DatabaseManager {
         let db_path = Path::new(&config.db_path);
         
         // Create shared block cache
-        let block_cache = Cache::new_lru_cache(config.block_cache_size)?;
+        let block_cache = Cache::new_lru_cache(config.block_cache_size);
 
         // Define all column families with their specific configurations
         let cf_configs = vec![
@@ -286,6 +314,8 @@ impl DatabaseManager {
             CFConfig::root_history(),
             CFConfig::block_index(),
             CFConfig::tree_metadata(),
+            CFConfig::encrypted_notes(),
+            CFConfig::wallet_notes(),
         ];
 
         // Create column family descriptors
@@ -302,7 +332,7 @@ impl DatabaseManager {
         db_opts.create_if_missing(true);
         db_opts.create_missing_column_families(true);
         db_opts.set_max_open_files(config.max_open_files);
-        db_opts.set_db_write_buffer_size(config.total_write_buffer_size);
+        db_opts.set_db_write_buffer_size(config.total_write_buffer_size as usize);
         db_opts.set_max_background_jobs(config.max_background_jobs);
         db_opts.set_wal_size_limit_mb(config.wal_size_limit / 1024 / 1024);
         
@@ -313,12 +343,10 @@ impl DatabaseManager {
         let db = DB::open_cf_descriptors(&db_opts, db_path, cf_descriptors)
             .with_context(|| format!("Failed to open database at {}", config.db_path))?;
 
-        // Cache column family handles
+        // Cache column family names
         let mut column_families = HashMap::new();
         for cf_config in &cf_configs {
-            let cf_handle = db.cf_handle(&cf_config.name)
-                .ok_or_else(|| anyhow!("Column family {} not found", cf_config.name))?;
-            column_families.insert(cf_config.name.clone(), Arc::new(cf_handle.clone()));
+            column_families.insert(cf_config.name.clone(), cf_config.name.clone());
         }
 
         Ok(Self {
@@ -331,9 +359,7 @@ impl DatabaseManager {
 
     /// Get column family handle
     pub fn cf_handle(&self, name: &str) -> Result<&rocksdb::ColumnFamily> {
-        self.column_families
-            .get(name)
-            .map(|cf| cf.as_ref().as_ref())
+        self.db.cf_handle(name)
             .ok_or_else(|| anyhow!("Column family '{}' not found", name))
     }
 
@@ -349,8 +375,8 @@ impl DatabaseManager {
 
     /// Get database statistics
     pub fn get_statistics(&self) -> Result<String> {
-        self.db.property_value("rocksdb.stats")
-            .ok_or_else(|| anyhow!("Statistics not enabled"))
+        self.db.property_value("rocksdb.stats")?
+            .ok_or_else(|| anyhow::anyhow!("Statistics not enabled"))
     }
 
     /// Perform manual compaction for a column family
@@ -364,11 +390,13 @@ impl DatabaseManager {
     pub fn get_cf_sizes(&self) -> Result<HashMap<String, u64>> {
         let mut sizes = HashMap::new();
         
-        for (cf_name, cf_handle) in &self.column_families {
-            let size_str = self.db.property_value_cf(cf_handle, "rocksdb.estimate-live-data-size")
-                .unwrap_or_default();
-            let size_bytes = size_str.parse::<u64>().unwrap_or(0);
-            sizes.insert(cf_name.clone(), size_bytes);
+        for (cf_name, _) in &self.column_families {
+            if let Some(cf_handle) = self.db.cf_handle(cf_name) {
+                let size_str = self.db.property_value_cf(cf_handle, "rocksdb.estimate-live-data-size")
+                    .unwrap_or_default();
+                let size_bytes = size_str.as_ref().map(|s| s.parse::<u64>().unwrap_or(0)).unwrap_or(0);
+                sizes.insert(cf_name.clone(), size_bytes);
+            }
         }
         
         Ok(sizes)
@@ -537,7 +565,7 @@ mod tests {
         // Test put and get
         db_manager.put_cf(cf_names::UTXOS, key, value).unwrap();
         let retrieved = db_manager.get_cf(cf_names::UTXOS, key).unwrap();
-        assert_eq!(retrieved.as_ref(), Some(value.as_ref()));
+        assert_eq!(retrieved.as_deref(), Some(&value[..]));
         
         // Test delete
         db_manager.delete_cf(cf_names::UTXOS, key).unwrap();

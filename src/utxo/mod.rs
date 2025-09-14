@@ -8,6 +8,7 @@ pub mod indexing;
 pub mod converter;
 pub mod eth_deposit_handler;
 pub mod transaction;
+pub mod note;
 
 // Re-export main types
 pub use utxo::{UTXO, UTXOTransaction, User, UTXOInput, UTXOOutput, TransactionType};

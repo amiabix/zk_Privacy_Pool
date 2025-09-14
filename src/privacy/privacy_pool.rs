@@ -1,8 +1,9 @@
 //! Privacy Pool Implementation
 //! Core privacy pool functionality for the ZisK zkVM system
 
-use crate::utxo::{UTXO, User, MerkleProof, TransactionType};
+use crate::utxo::{UTXO, User, MerkleProof};
 use crate::merkle::EnhancedMerkleTree;
+use super::types::PoolStats;
 use serde::{Serialize, Deserialize};
 use std::collections::{HashMap, HashSet};
 
@@ -126,6 +127,7 @@ impl PrivacyPool {
             capacity: self.capacity,
             nullifier_count: self.nullifier_set.len() as u32,
             user_count: self.users.len() as u32,
+            approved_address_count: 0, // Not used in this implementation
         }
     }
 
@@ -159,22 +161,7 @@ impl PrivacyPool {
     }
 }
 
-/// Pool statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PoolStats {
-    /// Current Merkle root
-    pub merkle_root: [u8; 32],
-    /// Pool balance
-    pub pool_balance: u64,
-    /// Current size
-    pub size: u32,
-    /// Pool capacity
-    pub capacity: u32,
-    /// Number of used nullifiers
-    pub nullifier_count: u32,
-    /// Number of users
-    pub user_count: u32,
-}
+// PoolStats moved to super::types to avoid duplication
 
 impl Default for PrivacyPool {
     fn default() -> Self {

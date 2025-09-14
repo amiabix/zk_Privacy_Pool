@@ -57,7 +57,7 @@ impl DataService {
 
     /// Fetch deposit events from smart contract
     pub fn fetch_deposit_events(&mut self, from_block: u64, to_block: u64) -> Result<Vec<DepositEvent>, DataServiceError> {
-        println!("🔍 Fetching deposit events from block {} to {}", from_block, to_block);
+        println!(" Fetching deposit events from block {} to {}", from_block, to_block);
         
         // In this would make actual RPC calls to the blockchain
         // For now, we'll simulate the event fetching
@@ -67,13 +67,13 @@ impl DataService {
         for raw_event in mock_events {
             match self.parse_deposit_event(raw_event) {
                 Ok(deposit_event) => {
-                    println!("✅ Parsed deposit event: {} ETH from {}", 
+                    println!(" Parsed deposit event: {} ETH from {}", 
                         deposit_event.value as f64 / 1e18, deposit_event.depositor);
                     parsed_events.push(deposit_event.clone());
                     self.events_cache.insert(deposit_event.transaction_hash.clone(), deposit_event);
                 }
                 Err(e) => {
-                    println!("❌ Failed to parse event: {}", e);
+                    println!(" Failed to parse event: {}", e);
                 }
             }
         }
@@ -145,7 +145,7 @@ impl DataService {
 
     /// Start monitoring for new events
     pub fn start_monitoring(&mut self) -> Result<(), DataServiceError> {
-        println!("🚀 Starting event monitoring for contract: {}", self.contract_address);
+        println!(" Starting event monitoring for contract: {}", self.contract_address);
         
         // In this would set up a WebSocket connection or polling
         // For now, we'll simulate monitoring
@@ -159,7 +159,7 @@ impl DataService {
                 )?;
                 
                 if !events.is_empty() {
-                    println!("📥 Processed {} new deposit events", events.len());
+                    println!(" Processed {} new deposit events", events.len());
                 }
             }
             
@@ -222,6 +222,6 @@ mod tests {
             assert!(event.value > 0);
         }
         
-        println!("✅ DataService test passed");
+        println!(" DataService test passed");
     }
 }

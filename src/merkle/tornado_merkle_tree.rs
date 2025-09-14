@@ -569,7 +569,7 @@ mod tests {
         let recipient = [4u8; 32];
         
         let mut tree = TornadoMerkleTree::new(3);
-        let commitment = zisk_pedersen_commitment(value, blinding);
+        let commitment = generate_pedersen_commitment(value, blinding);
         tree.insert_leaf(commitment).unwrap();
         
         let merkle_proof = tree.generate_proof(0).unwrap();

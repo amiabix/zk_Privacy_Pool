@@ -9,7 +9,6 @@ use crate::database::batch_writer::{AtomicBatchWriter, BatchOperation};
 use crate::utxo::CanonicalUTXO;
 use crate::merkle::CanonicalSMT;
 use crate::relayer::DepositEvent;
-use web3::types::{Address, U256};
 
 /// Comprehensive UTXO manager with SMT integration
 pub struct UTXOManager {
@@ -88,11 +87,11 @@ impl UTXOManager {
         
         // Create canonical UTXO
         let utxo = CanonicalUTXO::new_eth(
-            deposit_event.transaction_hash.0,  // txid
+            deposit_event.transaction_hash.as_bytes().try_into().unwrap_or_default(),  // txid
             0,                                 // vout (always 0 for deposits)
             deposit_event.block_number,        // created_block
             self.operator_entropy_counter,     // entropy
-            deposit_event.value.as_u128(),     // amount in wei
+            deposit_event.value as u128,     // amount in wei
             owner_commitment,                  // privacy commitment
         );
 
@@ -287,11 +286,11 @@ impl UTXOManager {
             let owner_commitment = self.derive_owner_commitment(deposit_event)?;
             
             let utxo = CanonicalUTXO::new_eth(
-                deposit_event.transaction_hash.0,
+                deposit_event.transaction_hash.as_bytes().try_into().unwrap_or_default(),
                 0,
                 deposit_event.block_number,
                 self.operator_entropy_counter,
-                deposit_event.value.as_u128(),
+                deposit_event.value as u128,
                 owner_commitment,
             );
 
@@ -476,14 +475,15 @@ mod tests {
         
         // Create test deposit event
         let deposit_event = DepositEvent {
-            depositor: Address::from_low_u64_be(12345),
-            commitment: H256::from_low_u64_be(67890),
-            label: U256::from(0),
-            value: U256::from(1_000_000_000_000_000_000u64), // 1 ETH
-            precommitment_hash: H256::from_low_u64_be(11111),
+            depositor: "0x1234567890123456789012345678901234567890".to_string(),
+            commitment: "0x6789000000000000000000000000000000000000000000000000000000000000".to_string(),
+            label: 0,
+            value: 1_000_000_000_000_000_000u64, // 1 ETH
+            precommitment_hash: "0x1111000000000000000000000000000000000000000000000000000000000000".to_string(),
             block_number: 12345,
-            transaction_hash: H256::from_low_u64_be(54321),
+            transaction_hash: "0x5432000000000000000000000000000000000000000000000000000000000000".to_string(),
             log_index: 0,
+            merkle_root: "0x9999000000000000000000000000000000000000000000000000000000000000".to_string(),
         };
         
         // Process deposit

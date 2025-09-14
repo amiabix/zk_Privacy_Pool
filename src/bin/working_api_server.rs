@@ -14,12 +14,12 @@ use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower_http::cors::{CorsLayer, Any};
 use std::sync::Arc;
-use std::collections::HashMap;
+use tokio::sync::Mutex;
 
 use privacy_pool_zkvm::{
-    utxo::{UTXO, UTXOIndex, IndexedUTXO, UTXOId, ETHToUTXOConverter},
+    utxo::{UTXOIndex, ETHToUTXOConverter},
     merkle::EnhancedMerkleTree,
-    relayer::DepositEvent,
+    relayer::{DepositEvent, BlockchainConfig},
     privacy::PrivacyPool,
     utils::*,
 };
@@ -29,7 +29,7 @@ use privacy_pool_zkvm::{
 pub struct AppState {
     pub utxo_index: Arc<UTXOIndex>,
     pub merkle_tree: Arc<EnhancedMerkleTree>,
-    pub utxo_converter: Arc<ETHToUTXOConverter>,
+    pub utxo_converter: Arc<Mutex<ETHToUTXOConverter>>,
     pub privacy_pool: Arc<PrivacyPool>,
     pub tree_root: Arc<tokio::sync::Mutex<[u8; 32]>>,
     pub tree_version: Arc<tokio::sync::Mutex<u64>>,
@@ -39,7 +39,9 @@ impl AppState {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let utxo_index = Arc::new(UTXOIndex::new());
         let merkle_tree = Arc::new(EnhancedMerkleTree::new());
-        let utxo_converter = Arc::new(ETHToUTXOConverter::new(merkle_tree.clone()));
+        let blockchain_config = BlockchainConfig::default();
+        let privacy_pool_contract = privacy_pool_zkvm::utxo::converter::PrivacyPoolContract::new(blockchain_config)?;
+        let utxo_converter = Arc::new(Mutex::new(ETHToUTXOConverter::new(privacy_pool_contract)));
         let privacy_pool = Arc::new(PrivacyPool::new([0u8; 32])); // Default scope
         
         Ok(Self {
@@ -152,20 +154,29 @@ async fn process_deposit(
     State(state): State<AppState>,
     Json(deposit): Json<DepositRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    // Store clones for later use
+    let depositor_clone = deposit.depositor.clone();
+    let commitment_clone = deposit.commitment.clone();
+    let transaction_hash_clone = deposit.transaction_hash.clone();
+    let amount_clone = deposit.amount.clone();
+
     // Create a mock deposit event from the request
     let deposit_event = DepositEvent {
-        depositor: deposit.depositor.parse().unwrap_or_default(),
-        commitment: deposit.commitment.parse().unwrap_or_default(),
+        depositor: deposit.depositor,
+        commitment: deposit.commitment,
         value: deposit.amount.parse().unwrap_or_default(),
         block_number: deposit.block_number,
-        transaction_hash: deposit.transaction_hash.parse().unwrap_or_default(),
-        label: deposit.label.unwrap_or_default(),
+        transaction_hash: deposit.transaction_hash,
+        label: deposit.label.unwrap_or_default().parse().unwrap_or_default(),
         log_index: 0,
         precommitment_hash: deposit.precommitment_hash.unwrap_or_default(),
+        merkle_root: "0x0000000000000000000000000000000000000000000000000000000000000000".to_string(),
     };
     
     // Process the deposit using the converter
-    match state.utxo_converter.process_real_eth_deposit(&deposit_event).await {
+    // For API server, generate a dummy private key (in production, this should come from the depositor)
+    let dummy_private_key = [0u8; 32]; // In production, this should be provided by the client
+    match state.utxo_converter.lock().await.process_real_eth_deposit(&deposit_event, &dummy_private_key).await {
         Ok(result) => {
             // Update tree version
             let mut tree_version = state.tree_version.lock().await;
@@ -178,19 +189,19 @@ async fn process_deposit(
             Ok(Json(json!({
                 "success": true,
                 "deposit_event": {
-                    "depositor": deposit.depositor,
-                    "amount": deposit.amount,
-                    "commitment": deposit.commitment,
+                    "depositor": depositor_clone,
+                    "amount": amount_clone,
+                    "commitment": commitment_clone,
                     "block_number": deposit.block_number,
-                    "transaction_hash": deposit.transaction_hash,
+                    "transaction_hash": transaction_hash_clone,
                     "timestamp": std::time::SystemTime::now()
                         .duration_since(std::time::UNIX_EPOCH)
                         .unwrap()
                         .as_secs(),
-                    "utxo_id": format!("0x{}", hex::encode(result.operation.utxo.utxo_id)),
+                    "utxo_count": result.len(),
                     "status": "processed"
                 },
-                "utxo_id": format!("0x{}", hex::encode(result.operation.utxo.utxo_id)),
+                "utxo_count": result.len(),
                 "tree_position": 1,
                 "merkle_root": format!("0x{}", hex::encode(*tree_root))
             })))
@@ -273,7 +284,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logging
     env_logger::init();
     
-    println!("🚀 Starting Working Privacy Pool API Server...");
+    println!(" Starting Working Privacy Pool API Server...");
     
     // Create application state
     let app_state = AppState::new()?;
@@ -306,10 +317,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     let listener = TcpListener::bind(addr).await?;
     
-    println!("✅ Working Privacy Pool API Server running on http://{}", addr);
-    println!("📡 Frontend can connect to: http://localhost:8080");
-    println!("🔗 Health check: http://localhost:8080/health");
-    println!("📊 API endpoints:");
+    println!(" Working Privacy Pool API Server running on http://{}", addr);
+    println!(" Frontend can connect to: http://localhost:8080");
+    println!(" Health check: http://localhost:8080/health");
+    println!(" API endpoints:");
     println!("  GET  /api/utxos/:owner     - Get UTXOs for owner");
     println!("  GET  /api/balance/:owner   - Get balance for owner");
     println!("  POST /api/deposit          - Process new deposit");

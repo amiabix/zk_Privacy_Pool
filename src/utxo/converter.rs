@@ -8,6 +8,7 @@ use crate::relayer::{BlockchainClient, DepositEvent, BlockchainConfig};
 use web3::types::{Address, U256, H256};
 use secp256k1::{Secp256k1, SecretKey as Secp256k1SecretKey};
 use sha2::{Sha256, Digest};
+use hex;
 use rand::{Rng, thread_rng};
 use anyhow::{Result, anyhow};
 use std::collections::{HashMap, HashSet};
@@ -97,7 +98,7 @@ impl PrivacyPoolContract {
         value_wei: U256,
         commitment: H256,
     ) -> Result<H256> {
-        println!("💰 Processing real ETH deposit to blockchain...");
+        println!(" Processing real ETH deposit to blockchain...");
         println!("   Depositor: {:?}", depositor);
         println!("   Value: {} ETH", value_wei.as_u64() as f64 / 1e18);
         println!("   Commitment: {:?}", commitment);
@@ -108,13 +109,31 @@ impl PrivacyPoolContract {
         // Wait for confirmation
         self.blockchain_client.wait_for_transaction(tx_hash).await?;
         
-        println!("✅ deposit confirmed on blockchain: {:?}", tx_hash);
+        println!(" deposit confirmed on blockchain: {:?}", tx_hash);
         Ok(tx_hash)
     }
     
     /// Fetch real deposit events from the blockchain
     pub async fn fetch_real_deposits(&self, from_block: u64, to_block: u64) -> Result<Vec<DepositEvent>> {
-        self.blockchain_client.fetch_deposit_events(from_block, to_block).await
+        let blockchain_events = self.blockchain_client.fetch_deposit_events(from_block, to_block).await?;
+        
+        // Convert blockchain events to data service events
+        let mut events = Vec::new();
+        for event in blockchain_events {
+            events.push(DepositEvent {
+                depositor: event.depositor.to_string(),
+                commitment: format!("0x{:x}", event.commitment),
+                label: event.label.as_u64(),
+                value: event.value.as_u64(),
+                precommitment_hash: format!("0x{:x}", event.precommitment_hash),
+                block_number: event.block_number,
+                transaction_hash: format!("0x{:x}", event.transaction_hash),
+                log_index: event.log_index as u32,
+                merkle_root: "0x0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+            });
+        }
+        
+        Ok(events)
     }
     
     /// Get current blockchain state
@@ -164,7 +183,7 @@ impl ETHToUTXOConverter {
         }
         let nullifier_bytes = nullifier.0;
         registry.insert(nullifier);
-        println!("⚠️  Nullifier marked as spent: {:?}", nullifier_bytes);
+        println!("  Nullifier marked as spent: {:?}", nullifier_bytes);
         Ok(())
     }
     
@@ -177,7 +196,7 @@ impl ETHToUTXOConverter {
                 self.total_utxo_value
             ));
         }
-        println!("✅ Accounting verified: {} wei deposited = {} wei in UTXOs", 
+        println!(" Accounting verified: {} wei deposited = {} wei in UTXOs", 
                  self.total_deposited, self.total_utxo_value);
         Ok(())
     }
@@ -189,7 +208,7 @@ impl ETHToUTXOConverter {
         depositor_private_key: &[u8; 32], // For generating nullifiers
     ) -> Result<Vec<IndexedUTXO>> {
         // Validate deposit amount to prevent overflow
-        let value = deposit_event.value.as_u64();
+        let value = deposit_event.value;
         if value == 0 {
             return Err(anyhow!("Cannot process zero-value deposit"));
         }
@@ -198,17 +217,21 @@ impl ETHToUTXOConverter {
         self.total_deposited = self.total_deposited.checked_add(value)
             .ok_or_else(|| anyhow!("Overflow in total deposited amount"))?;
         
-        println!("💰 Processing REAL ETH deposit from blockchain:");
+        println!(" Processing REAL ETH deposit from blockchain:");
         println!("   Depositor: {:?}", deposit_event.depositor);
         println!("   Value: {} ETH", value as f64 / 1e18);
         println!("   TX Hash: {:?}", deposit_event.transaction_hash);
         println!("   Block: {}", deposit_event.block_number);
         
         // Generate secure UTXOs with proper cryptography
+        // Convert string addresses to proper types
+        let depositor_addr = Address::from_slice(&hex::decode(&deposit_event.depositor[2..]).unwrap_or_default());
+        let tx_hash = H256::from_slice(&hex::decode(&deposit_event.transaction_hash[2..]).unwrap_or_default());
+        
         let utxos = self.split_deposit_into_secure_utxos(
             value,
-            deposit_event.depositor,
-            deposit_event.transaction_hash,
+            depositor_addr,
+            tx_hash,
             deposit_event.block_number,
             depositor_private_key,
         )?;
@@ -227,7 +250,7 @@ impl ETHToUTXOConverter {
                     self.utxo_index.insert(utxo.address.into(), utxo.clone());
                     self.commitment_to_nullifier.insert(utxo.address.into(), nullifier);
                     self.next_utxo_index += 1;
-                    println!("   ✅ Added secure UTXO: {} ETH", utxo.value as f64 / 1e18);
+                    println!("    Added secure UTXO: {} ETH", utxo.value as f64 / 1e18);
                     successful_utxos.push(utxo);
                 }
                 Err(e) => {
@@ -246,7 +269,7 @@ impl ETHToUTXOConverter {
         // Verify accounting integrity
         self.verify_accounting()?;
         
-        println!("✅ Created {} secure UTXOs from {} ETH real deposit", 
+        println!(" Created {} secure UTXOs from {} ETH real deposit", 
                  successful_utxos.len(), value as f64 / 1e18);
         Ok(successful_utxos)
     }
@@ -417,18 +440,18 @@ impl ETHDepositProcessor {
             .await?;
         
         if deposit_events.is_empty() {
-            println!("🔍 No new deposits found on blockchain");
+            println!(" No new deposits found on blockchain");
             return Ok(Vec::new());
         }
         
-        println!("📥 Found {} new deposit events on blockchain", deposit_events.len());
+        println!(" Found {} new deposit events on blockchain", deposit_events.len());
         
         let mut all_utxos = Vec::new();
         
         for deposit_event in &deposit_events {
-            println!("💰 Processing real deposit event:");
+            println!(" Processing real deposit event:");
             println!("   Depositor: {:?}", deposit_event.depositor);
-            println!("   Value: {} ETH", deposit_event.value.as_u64() as f64 / 1e18);
+            println!("   Value: {} ETH", deposit_event.value as f64 / 1e18);
             println!("   TX Hash: {:?}", deposit_event.transaction_hash);
             println!("   Block: {}", deposit_event.block_number);
             
@@ -438,7 +461,7 @@ impl ETHDepositProcessor {
                 depositor_private_key,
             ).await?;
             
-            println!("🎯 Generated {} secure UTXOs from real deposit", utxos.len());
+            println!(" Generated {} secure UTXOs from real deposit", utxos.len());
             for (i, utxo) in utxos.iter().enumerate() {
                 println!("   UTXO {}: {} ETH (Commitment: {:?})", 
                          i + 1, 
@@ -456,7 +479,7 @@ impl ETHDepositProcessor {
         self.converter.verify_accounting()?;
         
         let (total_deposited, total_utxo_value, spent_nullifiers) = self.converter.get_accounting_info();
-        println!("📊 Accounting Summary:");
+        println!(" Accounting Summary:");
         println!("   Total Deposited: {} ETH", total_deposited as f64 / 1e18);
         println!("   Total UTXO Value: {} ETH", total_utxo_value as f64 / 1e18);
         println!("   Spent Nullifiers: {}", spent_nullifiers);
@@ -468,7 +491,7 @@ impl ETHDepositProcessor {
     pub fn spend_utxo(&mut self, commitment: &H256) -> Result<()> {
         if let Some(nullifier) = self.converter.get_nullifier_for_commitment(commitment) {
             self.converter.mark_nullifier_spent(nullifier.clone())?;
-            println!("💸 UTXO spent: {:?}", commitment);
+            println!(" UTXO spent: {:?}", commitment);
             Ok(())
         } else {
             Err(anyhow!("Cannot spend UTXO: commitment not found"))
@@ -497,7 +520,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_secure_eth_to_utxo_conversion() {
-        println!("🧪 Testing secure ETH to UTXO conversion...");
+        println!(" Testing secure ETH to UTXO conversion...");
         
         // Create blockchain config for testing
         let config = BlockchainConfig::default();
@@ -512,7 +535,7 @@ mod tests {
         let utxos = processor.process_real_deposits(&depositor_private_key).await
             .expect("Failed to process real deposits");
         
-        println!("✅ Secure ETH to UTXO conversion test passed!");
+        println!(" Secure ETH to UTXO conversion test passed!");
         println!("   Created {} UTXOs", utxos.len());
         println!("   Merkle root: {:?}", processor.get_merkle_root());
         

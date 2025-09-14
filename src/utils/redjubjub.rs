@@ -408,6 +408,8 @@ mod tests {
             .collect();
         
         // Test batch verification
-        assert!(RedJubjubSignatureScheme::batch_verify(&signatures));
+        // Convert array references to slice references and clone values
+        let signature_slices: Vec<_> = signatures.iter().map(|(sig, msg, pk)| (sig.clone(), msg.as_slice(), pk.clone())).collect();
+        assert!(RedJubjubSignatureScheme::batch_verify(&signature_slices[..]));
     }
 }

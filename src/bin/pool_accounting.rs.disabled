@@ -1,14 +1,14 @@
 #![no_main]
 ziskos::entrypoint!(main);
 
-use privacy_pool_zkvm::utxo::UTXOTransaction;
-use privacy_pool_zkvm::privacy_pool::PrivacyPool;
+use privacy_pool_zkvm::privacy::{CompletePrivacyPoolExample, PrivacyPoolTransaction, CompleteSystemStats};
+use privacy_pool_zkvm::TransactionResult;
 use ziskos::{read_input, set_output};
 use std::convert::TryInto;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct PoolBatch {
-    transactions: Vec<UTXOTransaction>,
+    transactions: Vec<PrivacyPoolTransaction>,
     old_merkle_root: [u8; 32],
     old_pool_balance: u64,
     expected_new_merkle_root: [u8; 32],
@@ -22,9 +22,8 @@ fn main() {
         .expect("Failed to deserialize batch");
     
     // Initialize pool with old state
-    let mut pool = PrivacyPool::new();
-    pool.merkle_tree.root = batch.old_merkle_root;
-    pool.pool_balance = batch.old_pool_balance;
+    let scope = [0u8; 32]; // Default scope for pool accounting
+    let mut pool = CompletePrivacyPoolExample::new(scope);
     
     // Process all transactions in batch
     let mut successful_txs = 0;
@@ -32,11 +31,11 @@ fn main() {
     let total_txs = batch.transactions.len();
     
     for transaction in batch.transactions {
-        let fee = transaction.fee;
-        match pool.process_transaction(transaction) {
-            Ok(privacy_pool_zkvm::transaction::TransactionResult::Success) => {
+        match pool.process_transaction(&transaction) {
+            Ok(true) => {
                 successful_txs += 1;
-                total_fees += fee;
+                // Note: PrivacyPoolTransaction doesn't have a fee field
+                // so we'll skip fee tracking for now
             }
             _ => {
                 // Transaction failed - this should not happen if individual proofs were valid
@@ -46,9 +45,9 @@ fn main() {
     }
     
     // Verify final state matches expected
-    let final_stats = pool.get_pool_stats();
-    let state_correct = final_stats.merkle_root == batch.expected_new_merkle_root &&
-                       final_stats.pool_balance == batch.expected_new_pool_balance;
+    let final_stats = pool.get_stats();
+    let state_correct = final_stats.pool_stats.merkle_root == batch.expected_new_merkle_root &&
+                       final_stats.pool_stats.pool_balance == batch.expected_new_pool_balance;
     
     // Output validation results
     set_output(0, if state_correct { 1 } else { 0 }); // State validation
@@ -59,14 +58,14 @@ fn main() {
     
     // Output final Merkle root (8 x u32 = 32 bytes)
     for i in 0..8 {
-        let chunk = u32::from_le_bytes(final_stats.merkle_root[i*4..(i+1)*4].try_into().unwrap());
+        let chunk = u32::from_le_bytes(final_stats.pool_stats.merkle_root[i*4..(i+1)*4].try_into().unwrap());
         set_output(5 + i, chunk);
     }
-    
+
     // Output final pool balance (2 x u32 = 8 bytes)
-    set_output(13, final_stats.pool_balance as u32);
-    set_output(14, (final_stats.pool_balance >> 32) as u32);
-    
+    set_output(13, final_stats.pool_stats.pool_balance as u32);
+    set_output(14, (final_stats.pool_stats.pool_balance >> 32) as u32);
+
     // Output nullifier count
-    set_output(15, final_stats.nullifiers_count as u32);
+    set_output(15, final_stats.pool_stats.nullifier_count as u32);
 }

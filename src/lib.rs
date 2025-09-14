@@ -13,6 +13,7 @@ pub mod privacy;
 pub mod relayer;
 pub mod utils;
 pub mod api;
+pub mod crypto;
 
 // Re-export main types for easy access
 pub use privacy::{PrivacyPool, PoolStats, UTXOPrivacyPool, ETHDepositEvent};

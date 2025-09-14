@@ -144,9 +144,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logging
     env_logger::init();
     
-    println!("🚀 Simple Privacy Pool API Server");
+    println!(" Simple Privacy Pool API Server");
     println!("=================================");
-    println!("📡 Quick mock server for frontend development");
+    println!(" Quick mock server for frontend development");
     println!();
     
     // Create router with mock endpoints
@@ -163,8 +163,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
     let listener = TcpListener::bind(addr).await?;
     
-    println!("✅ Server running on: http://{}", addr);
-    println!("📋 Available endpoints:");
+    println!(" Server running on: http://{}", addr);
+    println!(" Available endpoints:");
     println!("   GET  /api/health          - Health check");
     println!("   POST /api/deposit         - Process ETH deposit (mock)");
     println!("   GET  /api/balance/:owner  - Get owner balance (mock)");
@@ -172,8 +172,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   GET  /api/tree/stats      - Get tree statistics (mock)");
     println!("   GET  /api/tree/root       - Get current tree root (mock)");
     println!();
-    println!("🔧 Use this server for frontend development and testing");
-    println!("🔗 Example: curl http://localhost:3001/api/health");
+    println!(" Use this server for frontend development and testing");
+    println!(" Example: curl http://localhost:3001/api/health");
     
     axum::serve(listener, app).await?;
     

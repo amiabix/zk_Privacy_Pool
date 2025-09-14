@@ -258,7 +258,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logging
     env_logger::init();
     
-    println!("🚀 Starting Standalone Working Privacy Pool API Server...");
+    println!(" Starting Standalone Working Privacy Pool API Server...");
     
     // Create application state
     let app_state = AppState::new();
@@ -291,10 +291,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     let listener = TcpListener::bind(addr).await?;
     
-    println!("✅ Standalone Working Privacy Pool API Server running on http://{}", addr);
-    println!("📡 Frontend can connect to: http://localhost:8080");
-    println!("🔗 Health check: http://localhost:8080/health");
-    println!("📊 API endpoints:");
+    println!(" Standalone Working Privacy Pool API Server running on http://{}", addr);
+    println!(" Frontend can connect to: http://localhost:8080");
+    println!(" Health check: http://localhost:8080/health");
+    println!(" API endpoints:");
     println!("  GET  /api/utxos/:owner     - Get UTXOs for owner");
     println!("  GET  /api/balance/:owner   - Get balance for owner");
     println!("  POST /api/deposit          - Process new deposit");

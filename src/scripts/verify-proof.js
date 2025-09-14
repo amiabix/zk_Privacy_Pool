@@ -7,7 +7,7 @@ const fs = require("fs");
  */
 
 async function main() {
-  console.log("🔍 Privacy Pool Proof Verification Script");
+  console.log(" Privacy Pool Proof Verification Script");
   
   // Get the contract address from deployment info
   const deploymentFiles = fs.readdirSync("./deployments").filter(f => f.endsWith(".json"));
@@ -27,7 +27,7 @@ async function main() {
   
   // Get current pool state
   const [merkleRoot, poolBalance, nullifierCount] = await verifier.getPoolState();
-  console.log("\n📊 Current Pool State:");
+  console.log("\n Current Pool State:");
   console.log("Merkle Root:", merkleRoot);
   console.log("Pool Balance:", ethers.formatEther(poolBalance), "ETH");
   console.log("Nullifier Count:", nullifierCount.toString());
@@ -76,7 +76,7 @@ async function main() {
   const publicKey = "0x" + "00".repeat(33); // Placeholder public key
   const fee = ethers.parseEther("0.001"); // 0.001 ETH fee
   
-  console.log("\n🔐 Verifying proof...");
+  console.log("\n Verifying proof...");
   console.log("Input commitments:", inputCommitments.length);
   console.log("Output commitments:", outputCommitments.length);
   console.log("Nullifiers:", nullifiers.length);
@@ -97,29 +97,29 @@ async function main() {
     
     console.log("⏳ Waiting for transaction confirmation...");
     const receipt = await tx.wait();
-    console.log("✅ Proof verification transaction confirmed!");
+    console.log(" Proof verification transaction confirmed!");
     console.log("Transaction hash:", receipt.hash);
     console.log("Gas used:", receipt.gasUsed.toString());
     
     // Get updated pool state
     const [newMerkleRoot, newPoolBalance, newNullifierCount] = await verifier.getPoolState();
-    console.log("\n📊 Updated Pool State:");
+    console.log("\n Updated Pool State:");
     console.log("New Merkle Root:", newMerkleRoot);
     console.log("New Pool Balance:", ethers.formatEther(newPoolBalance), "ETH");
     console.log("New Nullifier Count:", newNullifierCount.toString());
     
   } catch (error) {
-    console.error("❌ Proof verification failed:", error.message);
+    console.error(" Proof verification failed:", error.message);
     
     // Check if it's a known error
     if (error.message.includes("Pool not initialized")) {
-      console.log("💡 Try initializing the pool first");
+      console.log(" Try initializing the pool first");
     } else if (error.message.includes("ZisK verifier not set")) {
-      console.log("💡 Set the ZisK verifier address first");
+      console.log(" Set the ZisK verifier address first");
     } else if (error.message.includes("Proof already verified")) {
-      console.log("💡 This proof has already been verified");
+      console.log(" This proof has already been verified");
     } else if (error.message.includes("Nullifier already used")) {
-      console.log("💡 One or more nullifiers have already been used");
+      console.log(" One or more nullifiers have already been used");
     }
   }
 }

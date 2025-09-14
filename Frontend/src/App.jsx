@@ -51,21 +51,21 @@ function App() {
       if (response.ok) {
         const health = await response.json()
         setApiConnected(true)
-        console.log('✅ API Connected:', health)
+        console.log(' API Connected:', health)
         
         // Load tree stats
         const statsResponse = await fetch('http://localhost:8080/api/tree/stats')
         if (statsResponse.ok) {
           const statsData = await statsResponse.json()
           setTreeStats(statsData.stats)
-          console.log('📊 Tree Stats:', statsData.stats)
+          console.log(' Tree Stats:', statsData.stats)
         }
       } else {
         setApiConnected(false)
-        console.log('❌ API not responding')
+        console.log(' API not responding')
       }
     } catch (err) {
-      console.log('❌ API server not available:', err.message)
+      console.log(' API server not available:', err.message)
       setApiConnected(false)
     }
   }
@@ -334,7 +334,7 @@ function App() {
   return (
     <div className="container">
       <div className="header">
-        <h1>🔒 Privacy Pool ZKVM</h1>
+        <h1> Privacy Pool ZKVM</h1>
         <p>Deposit ETH publicly, spend privately with zero-knowledge proofs</p>
       </div>
 
@@ -376,15 +376,15 @@ function App() {
 
               <div className={`status ${isCorrectNetwork ? 'connected' : 'error'}`}>
                 {isCorrectNetwork ? 
-                  (currentNetwork?.chainId === 31337n ? '✅ Connected to Privacy Pool (Anvil)' : '✅ Connected to Privacy Pool (Sepolia)') : 
-                  '⚠️ Switch to Anvil or Sepolia network to use Privacy Pool'
+                  (currentNetwork?.chainId === 31337n ? ' Connected to Privacy Pool (Anvil)' : ' Connected to Privacy Pool (Sepolia)') : 
+                  ' Switch to Anvil or Sepolia network to use Privacy Pool'
                 }
               </div>
               
               <div className={`status ${apiConnected ? 'connected' : 'error'}`}>
                 {apiConnected ? 
-                  '✅ Rust API Server Connected' : 
-                  '⚠️ Rust API Server Not Available (using mock data)'
+                  ' Rust API Server Connected' : 
+                  ' Rust API Server Not Available (using mock data)'
                 }
               </div>
               

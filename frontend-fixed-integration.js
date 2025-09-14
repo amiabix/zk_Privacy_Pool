@@ -58,10 +58,10 @@ export class PrivacyPoolClient {
                 gasLimit: 300000
             });
             
-            console.log("✅ Simple deposit transaction sent:", tx.hash);
+            console.log(" Simple deposit transaction sent:", tx.hash);
             
             const receipt = await tx.wait();
-            console.log("✅ Transaction confirmed:", receipt.transactionHash);
+            console.log(" Transaction confirmed:", receipt.transactionHash);
             
             // Extract event data
             const depositEvent = receipt.events?.find(e => e.event === 'Deposited');
@@ -75,7 +75,7 @@ export class PrivacyPoolClient {
             };
             
         } catch (error) {
-            console.error("❌ Simple deposit failed:", error);
+            console.error(" Simple deposit failed:", error);
             return {
                 success: false,
                 error: error.message
@@ -111,7 +111,7 @@ export class PrivacyPoolClient {
             };
             
         } catch (error) {
-            console.error("❌ Commitment deposit failed:", error);
+            console.error(" Commitment deposit failed:", error);
             return {
                 success: false,
                 error: error.message
@@ -128,7 +128,7 @@ export class PrivacyPoolClient {
             const balance = await this.contract.getContractBalance();
             return ethers.formatEther(balance);
         } catch (error) {
-            console.error("❌ Failed to get contract balance:", error);
+            console.error(" Failed to get contract balance:", error);
             return "0";
         }
     }
@@ -143,7 +143,7 @@ export class PrivacyPoolClient {
             const balance = await this.contract.getUserBalance(userAddress);
             return ethers.formatEther(balance);
         } catch (error) {
-            console.error("❌ Failed to get user balance:", error);
+            console.error(" Failed to get user balance:", error);
             return "0";
         }
     }
@@ -156,7 +156,7 @@ export class PrivacyPoolClient {
         try {
             return await this.contract.getCurrentMerkleRoot();
         } catch (error) {
-            console.error("❌ Failed to get Merkle root:", error);
+            console.error(" Failed to get Merkle root:", error);
             return "0x0";
         }
     }
@@ -174,7 +174,7 @@ export class PrivacyPoolClient {
                 ethers.parseEther(amount)
             );
         } catch (error) {
-            console.error("❌ Failed to preview commitment:", error);
+            console.error(" Failed to preview commitment:", error);
             return "0x0";
         }
     }
@@ -188,7 +188,7 @@ export class PrivacyPoolClient {
         try {
             return await this.contract.isCommitmentUsed(commitment);
         } catch (error) {
-            console.error("❌ Failed to check commitment:", error);
+            console.error(" Failed to check commitment:", error);
             return false;
         }
     }

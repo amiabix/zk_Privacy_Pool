@@ -41,7 +41,7 @@ contract PrivacyPoolFixed is ReentrancyGuard, Ownable {
         commitments[commitment] = true;
         totalDeposits += msg.value;
         
-        // Update merkle root (simplified - in production, this would be done by a relayer)
+        // Update merkle root (simplified - in this would be done by a relayer)
         bytes32 oldRoot = merkleRoot;
         merkleRoot = keccak256(abi.encodePacked(oldRoot, commitment, block.timestamp));
         

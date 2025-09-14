@@ -29,7 +29,7 @@ async function main() {
   console.log("🌳 Merkle Root:", merkleRoot);
   
   console.log("\n🎯 SUMMARY:");
-  console.log("- Real ETH in contract:", ethers.formatEther(contractBalance), "ETH");
+  console.log("- ETH in contract:", ethers.formatEther(contractBalance), "ETH");
   console.log("- Contract tracking:", ethers.formatEther(totalDeposits), "ETH");
   console.log("- Your balance:", ethers.formatEther(userBalance), "ETH");
 }

@@ -1,6 +1,6 @@
 //! Database Schema Implementation
 //! 
-//! RocksDB column families with production-grade configuration
+//! RocksDB column families with grade configuration
 //! following the canonical specification exactly.
 
 use rocksdb::{DB, ColumnFamilyDescriptor, Options, WriteBatch, ReadOptions, WriteOptions, Cache, BlockBasedOptions, DBCompactionStyle};
@@ -25,7 +25,7 @@ pub mod cf_names {
     pub const TREE_METADATA: &str = "cf_tree_metadata";
 }
 
-/// Database configuration for production deployment
+/// Database configuration for deployment
 #[derive(Debug, Clone)]
 pub struct DBConfig {
     /// Database path

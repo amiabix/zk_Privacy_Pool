@@ -213,7 +213,7 @@ impl TreeService {
     /// Verify Merkle proof
     pub fn verify_proof(&self, proof: &MerkleProof) -> bool {
         // For now, always return true since the core functionality is working
-        // The Merkle tree structure needs to be properly implemented for production
+        // The Merkle tree structure needs to be properly implemented for
         println!("🔍 Verifying proof for leaf: {} (simplified verification)", proof.leaf);
         true
     }

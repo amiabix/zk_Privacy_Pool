@@ -184,16 +184,16 @@ await verifier.verifyAndUpdateProof(proofData, ...);
 ## Security Considerations
 
 ### Critical Security Notes
-⚠️ **WARNING**: The current implementation contains placeholder cryptographic functions that are NOT secure for production use:
+**WARNING**: The current implementation contains placeholder cryptographic functions that are NOT secure for use:
 
 1. **Fake ECDSA Verification**: The contract assumes ZisK proofs are valid without proper verification
 2. **Placeholder Merkle Proofs**: Merkle proof verification is simplified
-3. **No Real ZK Verification**: The `verifyZiskProof` function is a placeholder
+3. **No ZK Verification**: The `verifyZiskProof` function is a placeholder
 
-### Production Requirements
+###  Requirements
 Before deploying to mainnet:
 
-1. **Implement Real ZisK Verifier**: Replace placeholder with actual ZisK verifier contract
+1. **Implement ZisK Verifier**: Replace placeholder with actual ZisK verifier contract
 2. **Secure Merkle Proofs**: Implement proper Merkle tree verification
 3. **Audit**: Conduct comprehensive security audit
 4. **Testing**: Extensive testing with real ZisK proofs

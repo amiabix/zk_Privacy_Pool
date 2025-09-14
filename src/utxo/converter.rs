@@ -1,10 +1,10 @@
-//! Secure ETH to UTXO Conversion with Real Blockchain Integration
+//! Secure ETH to UTXO Conversion with Blockchain Integration
 //! Implements the complete flow from real ETH deposits to cryptographically secure UTXOs
 
 use crate::utxo::indexing::{IndexedUTXO, UTXOId};
 use crate::merkle::EnhancedMerkleTree;
 use crate::utxo::utxo::UTXO;
-use crate::relayer::{RealBlockchainClient, RealDepositEvent, BlockchainConfig};
+use crate::relayer::{BlockchainClient, DepositEvent, BlockchainConfig};
 use web3::types::{Address, U256, H256};
 use secp256k1::{Secp256k1, SecretKey as Secp256k1SecretKey};
 use sha2::{Sha256, Digest};
@@ -79,14 +79,14 @@ impl CryptoUtils {
     }
 }
 
-/// Privacy Pool Contract Interface with Real Blockchain Integration
+/// Privacy Pool Contract Interface with Blockchain Integration
 pub struct PrivacyPoolContract {
-    blockchain_client: RealBlockchainClient,
+    blockchain_client: BlockchainClient,
 }
 
 impl PrivacyPoolContract {
     pub fn new(config: BlockchainConfig) -> Result<Self> {
-        let blockchain_client = RealBlockchainClient::new(config)?;
+        let blockchain_client = BlockchainClient::new(config)?;
         Ok(Self { blockchain_client })
     }
 
@@ -108,12 +108,12 @@ impl PrivacyPoolContract {
         // Wait for confirmation
         self.blockchain_client.wait_for_transaction(tx_hash).await?;
         
-        println!("✅ Real deposit confirmed on blockchain: {:?}", tx_hash);
+        println!("✅ deposit confirmed on blockchain: {:?}", tx_hash);
         Ok(tx_hash)
     }
     
     /// Fetch real deposit events from the blockchain
-    pub async fn fetch_real_deposits(&self, from_block: u64, to_block: u64) -> Result<Vec<RealDepositEvent>> {
+    pub async fn fetch_real_deposits(&self, from_block: u64, to_block: u64) -> Result<Vec<DepositEvent>> {
         self.blockchain_client.fetch_deposit_events(from_block, to_block).await
     }
     
@@ -185,7 +185,7 @@ impl ETHToUTXOConverter {
     /// Process a real ETH deposit from the blockchain
     pub async fn process_real_eth_deposit(
         &mut self,
-        deposit_event: &RealDepositEvent,
+        deposit_event: &DepositEvent,
         depositor_private_key: &[u8; 32], // For generating nullifiers
     ) -> Result<Vec<IndexedUTXO>> {
         // Validate deposit amount to prevent overflow
@@ -299,7 +299,7 @@ impl ETHToUTXOConverter {
             // Create secure UTXO
             let utxo = IndexedUTXO {
                 id: UTXOId::new(commitment.into(), utxo_index as u32),
-                account_id: 1, // Map to actual account in production
+                account_id: 1, // Map to actual account in
                 address: commitment.into(),
                 value: utxo_value,
                 height: block_number as u32,
@@ -385,7 +385,7 @@ impl ETHToUTXOConverter {
     }
 }
 
-/// Secure ETH Deposit Processor with Real Blockchain Integration
+/// Secure ETH Deposit Processor with Blockchain Integration
 /// Handles real ETH deposits from the blockchain and converts them to cryptographically secure UTXOs
 pub struct ETHDepositProcessor {
     pub converter: ETHToUTXOConverter,
@@ -406,7 +406,7 @@ impl ETHDepositProcessor {
     /// Process real deposits from the blockchain
     pub async fn process_real_deposits(
         &mut self,
-        depositor_private_key: &[u8; 32], // In production, this would be managed securely
+        depositor_private_key: &[u8; 32], // In this would be managed securely
     ) -> Result<Vec<IndexedUTXO>> {
         // Get current blockchain state
         let current_block = self.converter.privacy_pool.get_current_block().await?;

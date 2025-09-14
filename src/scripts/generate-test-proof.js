@@ -151,7 +151,7 @@ function generateZiskOutputs(transactionData) {
 }
 
 function generateMockProof() {
-  // Generate a mock ZK proof (in production, this would come from ZisK)
+  // Generate a mock ZK proof (in this would come from ZisK)
   const proofLength = 1000; // Mock proof length
   const proof = new Uint8Array(proofLength);
   

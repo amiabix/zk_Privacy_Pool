@@ -1,7 +1,7 @@
 //! Secure Merkle Tree Inspector - Shows detailed tree structure and UTXO contents with security analysis
 
 use crate::utxo::converter::{ETHToUTXOConverter, CryptoUtils, ETHDepositProcessor};
-use crate::{BlockchainConfig, RealDepositEvent};
+use crate::{BlockchainConfig, DepositEvent};
 use crate::utxo::indexing::IndexedUTXO;
 use web3::types::{Address, U256, H256};
 use anyhow::Result;
@@ -20,14 +20,14 @@ impl TreeInspector {
 
     /// Process real deposits from blockchain and then inspect the tree
     pub async fn process_and_inspect(&mut self) -> Result<()> {
-        println!("🌳 Secure Merkle Tree Inspector (Real Blockchain Integration)");
+        println!("🌳 Secure Merkle Tree Inspector ( Blockchain Integration)");
         println!("{}", "=".repeat(70));
 
         // Generate a secure private key for processing deposits
         let depositor_private_key = CryptoUtils::generate_secure_random();
         
         // Create a sample deposit event for testing
-        let deposit_event = RealDepositEvent {
+        let deposit_event = DepositEvent {
             depositor: Address::from([0x42u8; 20]),
             commitment: H256::from([0x43u8; 32]),
             label: U256::from(1),

@@ -88,7 +88,7 @@ The API now performs these checks:
 1. **Transaction Exists**: `eth_getTransactionByHash`
 2. **Correct Recipient**: Verify `to` address matches our contract
 3. **Transaction Success**: Check `status == "0x1"` in receipt
-4. **Real Amount**: Extract actual ETH value from transaction
+4. ** Amount**: Extract actual ETH value from transaction
 5. **Block Confirmation**: Ensure transaction is mined
 
 ### Error Cases:

@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use privacy_pool_zkvm::{
     utxo::{UTXO, UTXOIndex, IndexedUTXO, UTXOId, ETHToUTXOConverter},
     merkle::EnhancedMerkleTree,
-    relayer::RealDepositEvent,
+    relayer::DepositEvent,
     privacy::PrivacyPool,
     utils::*,
 };
@@ -153,7 +153,7 @@ async fn process_deposit(
     Json(deposit): Json<DepositRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     // Create a mock deposit event from the request
-    let deposit_event = RealDepositEvent {
+    let deposit_event = DepositEvent {
         depositor: deposit.depositor.parse().unwrap_or_default(),
         commitment: deposit.commitment.parse().unwrap_or_default(),
         value: deposit.amount.parse().unwrap_or_default(),

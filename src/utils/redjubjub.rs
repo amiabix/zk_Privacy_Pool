@@ -5,7 +5,7 @@
 //! 
 //! Reference: https://github.com/zcash/sapling-crypto
 
-// Note: ZisK precompiles would be used in production
+// Note: ZisK precompiles would be used in
 // For now, we'll use standard cryptographic functions
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -235,7 +235,7 @@ impl RedJubjubSignatureScheme {
     pub fn batch_verify(
         signatures: &[(RedJubjubSignature, &[u8], RedJubjubPublicKey)],
     ) -> bool {
-        // In production, this would use more efficient batch verification
+        // In this would use more efficient batch verification
         // For now, verify each signature individually
         signatures.iter().all(|(sig, msg, pk)| {
             Self::verify(sig, msg, pk)

@@ -1,6 +1,6 @@
 //! Canonical UTXO Implementation
 //! 
-//! This module implements the production-grade UTXO format with exact
+//! This module implements the grade UTXO format with exact
 //! byte-level serialization according to the canonical specification.
 
 use serde::{Serialize, Deserialize};

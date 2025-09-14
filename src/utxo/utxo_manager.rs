@@ -8,7 +8,7 @@ use crate::database::schema::DatabaseManager;
 use crate::database::batch_writer::{AtomicBatchWriter, BatchOperation};
 use crate::utxo::CanonicalUTXO;
 use crate::merkle::CanonicalSMT;
-use crate::relayer::RealDepositEvent;
+use crate::relayer::DepositEvent;
 use web3::types::{Address, U256};
 
 /// Comprehensive UTXO manager with SMT integration
@@ -49,7 +49,7 @@ pub struct DepositResult {
     pub operation: UTXOOperationResult,
     
     /// Original deposit event
-    pub deposit_event: RealDepositEvent,
+    pub deposit_event: DepositEvent,
     
     /// Processing timestamp
     pub processed_at: u64,
@@ -79,7 +79,7 @@ impl UTXOManager {
     }
 
     /// Process ETH deposit into UTXO with full SMT integration
-    pub fn process_eth_deposit(&mut self, deposit_event: RealDepositEvent) -> Result<DepositResult> {
+    pub fn process_eth_deposit(&mut self, deposit_event: DepositEvent) -> Result<DepositResult> {
         // Generate next entropy value
         self.operator_entropy_counter = self.operator_entropy_counter.wrapping_add(1);
         
@@ -276,7 +276,7 @@ impl UTXOManager {
     }
 
     /// Batch process multiple deposits efficiently
-    pub fn batch_process_deposits(&mut self, deposit_events: &[RealDepositEvent]) -> Result<Vec<DepositResult>> {
+    pub fn batch_process_deposits(&mut self, deposit_events: &[DepositEvent]) -> Result<Vec<DepositResult>> {
         let mut results = Vec::new();
         let mut utxos = Vec::new();
 
@@ -397,9 +397,9 @@ impl UTXOManager {
     // Helper methods
 
     /// Derive privacy-preserving owner commitment from deposit
-    fn derive_owner_commitment(&self, deposit: &RealDepositEvent) -> Result<[u8; 32]> {
+    fn derive_owner_commitment(&self, deposit: &DepositEvent) -> Result<[u8; 32]> {
         // For now, use a simple hash of depositor + commitment
-        // In production, this would use more sophisticated privacy-preserving derivation
+        // In this would use more sophisticated privacy-preserving derivation
         use sha3::{Keccak256, Digest};
         
         let mut hasher = Keccak256::new();
@@ -421,7 +421,7 @@ impl UTXOManager {
 
     /// Sign tree root (placeholder implementation)
     fn sign_root(&self, root: [u8; 32]) -> Result<Vec<u8>> {
-        // Placeholder: In production, this would use the operator's private key
+        // Placeholder: In this would use the operator's private key
         // to sign the root hash for accountability
         use sha3::{Keccak256, Digest};
         
@@ -475,7 +475,7 @@ mod tests {
         let initial_root = utxo_manager.get_current_root();
         
         // Create test deposit event
-        let deposit_event = RealDepositEvent {
+        let deposit_event = DepositEvent {
             depositor: Address::from_low_u64_be(12345),
             commitment: H256::from_low_u64_be(67890),
             label: U256::from(0),

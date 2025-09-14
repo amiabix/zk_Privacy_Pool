@@ -59,7 +59,7 @@ impl DataService {
     pub fn fetch_deposit_events(&mut self, from_block: u64, to_block: u64) -> Result<Vec<DepositEvent>, DataServiceError> {
         println!("🔍 Fetching deposit events from block {} to {}", from_block, to_block);
         
-        // In production, this would make actual RPC calls to the blockchain
+        // In this would make actual RPC calls to the blockchain
         // For now, we'll simulate the event fetching
         let mock_events = self.simulate_deposit_events(from_block, to_block);
         
@@ -84,7 +84,7 @@ impl DataService {
 
     /// Parse raw event data into DepositEvent
     fn parse_deposit_event(&self, raw_event: RawDepositEvent) -> Result<DepositEvent, DataServiceError> {
-        // In production, this would decode the actual event logs
+        // In this would decode the actual event logs
         // For now, we'll simulate parsing
         
         // Simulate event parsing
@@ -147,7 +147,7 @@ impl DataService {
     pub fn start_monitoring(&mut self) -> Result<(), DataServiceError> {
         println!("🚀 Starting event monitoring for contract: {}", self.contract_address);
         
-        // In production, this would set up a WebSocket connection or polling
+        // In this would set up a WebSocket connection or polling
         // For now, we'll simulate monitoring
         loop {
             let current_block = self.get_current_block_number()?;
@@ -170,7 +170,7 @@ impl DataService {
 
     /// Get current block number (simulated)
     fn get_current_block_number(&self) -> Result<u64, DataServiceError> {
-        // In production, this would make an RPC call
+        // In this would make an RPC call
         Ok(1000 + (std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()

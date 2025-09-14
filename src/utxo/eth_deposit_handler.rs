@@ -113,7 +113,7 @@ impl ETHDepositHandler {
 
     /// Verify ETH deposit event (simplified - in production, verify against Ethereum)
     fn verify_deposit_event(&self, deposit: &ETHDepositEvent) -> Result<(), DepositError> {
-        // In production, this would:
+        // In this would:
         // 1. Verify the transaction exists on Ethereum
         // 2. Verify the transaction was sent to the privacy pool contract
         // 3. Verify the amount and recipient

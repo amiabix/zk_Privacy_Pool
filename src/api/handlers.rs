@@ -1,7 +1,7 @@
 //! API Handlers for Privacy Pool Operations
 //!
 //! HTTP request handlers that integrate with existing UTXO and Merkle tree modules
-//! and VERIFY REAL BLOCKCHAIN DEPOSITS before creating UTXOs.
+//! and VERIFY BLOCKCHAIN DEPOSITS before creating UTXOs.
 
 use axum::{
     extract::{Path, Query, State},
@@ -19,7 +19,7 @@ use std::str::FromStr;
 
 use crate::api::types::*;
 use crate::utxo::CanonicalUTXO;
-use crate::relayer::RealDepositEvent;
+use crate::relayer::blockchain_integration::DepositEvent as BlockchainDepositEvent;
 use crate::privacy::PrivacyPool;
 
 /// Simplified application state using in-memory storage
@@ -117,7 +117,7 @@ pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse>
     })
 }
 
-/// Process a single ETH deposit - VERIFIES REAL BLOCKCHAIN TRANSACTION
+/// Process a single ETH deposit - VERIFIES BLOCKCHAIN TRANSACTION
 pub async fn process_deposit(
     State(state): State<AppState>,
     Json(request): Json<DepositRequest>,
@@ -126,7 +126,7 @@ pub async fn process_deposit(
 
     // STEP 1: VERIFY THE TRANSACTION EXISTS ON BLOCKCHAIN
     let transaction_data = match verify_transaction_on_blockchain(
-        &request.tx_hash,
+        &request.tx_hash.to_string(),
         &state.config.sepolia_rpc_url,
         &state.config.contract_address
     ).await {
@@ -144,27 +144,34 @@ pub async fn process_deposit(
     println!("   - Block: {}", transaction_data.block_number);
 
     // STEP 2: CREATE VERIFIED DEPOSIT EVENT
-    let depositor_address = web3::types::Address::from_str(&transaction_data.from_address)
-        .map_err(|e| anyhow!("Invalid depositor address: {}", e))?;
+    let depositor_address = match web3::types::Address::from_str(&transaction_data.from_address) {
+        Ok(addr) => addr,
+        Err(e) => return Err(api_error("INVALID_DEPOSITOR", &format!("Invalid depositor address: {}", e))),
+    };
 
-    let commitment_hash = web3::types::H256::from_slice(
-        &hex::decode(&request.commitment.strip_prefix("0x").unwrap_or(&request.commitment))
-            .map_err(|e| anyhow!("Invalid commitment format: {}", e))?
-    );
+    let commitment_str = format!("{:?}", request.commitment);
+    let commitment_hash = match hex::decode(&commitment_str.strip_prefix("0x").unwrap_or(&commitment_str)) {
+        Ok(bytes) => web3::types::H256::from_slice(&bytes),
+        Err(e) => return Err(api_error("INVALID_COMMITMENT", &format!("Invalid commitment format: {}", e))),
+    };
 
-    let tx_hash_bytes = hex::decode(&request.tx_hash.strip_prefix("0x").unwrap_or(&request.tx_hash))
-        .map_err(|e| anyhow!("Invalid transaction hash format: {}", e))?;
+    let tx_hash_str = format!("{:?}", request.tx_hash);
+    let tx_hash_bytes = match hex::decode(&tx_hash_str.strip_prefix("0x").unwrap_or(&tx_hash_str)) {
+        Ok(bytes) => bytes,
+        Err(e) => return Err(api_error("INVALID_TX_HASH", &format!("Invalid transaction hash format: {}", e))),
+    };
     let transaction_hash = web3::types::H256::from_slice(&tx_hash_bytes);
 
-    let deposit_event = RealDepositEvent {
+    let deposit_event = BlockchainDepositEvent {
         depositor: depositor_address,
         commitment: commitment_hash,
         value: web3::types::U256::from_dec_str(&transaction_data.value_wei).unwrap_or(web3::types::U256::zero()),
         block_number: transaction_data.block_number,
         transaction_hash,
-        label: request.label.map(|l| web3::types::U256::from_dec_str(&l).unwrap_or(web3::types::U256::zero())).unwrap_or(web3::types::U256::zero()),
+        label: request.label.map(|l| web3::types::U256::from_dec_str(&l.to_string()).unwrap_or(web3::types::U256::zero())).unwrap_or(web3::types::U256::zero()),
         precommitment_hash: request.precommitment_hash.map(|ph| {
-            let ph_bytes = hex::decode(&ph.strip_prefix("0x").unwrap_or(&ph)).unwrap_or_default();
+            let ph_str = format!("{:?}", ph);
+            let ph_bytes = hex::decode(&ph_str.strip_prefix("0x").unwrap_or(&ph_str)).unwrap_or_default();
             web3::types::H256::from_slice(&ph_bytes)
         }).unwrap_or(web3::types::H256::zero()),
         log_index: 0,
@@ -210,7 +217,7 @@ pub async fn process_deposit(
         let mut tree_version = state.tree_version.lock().unwrap();
         *tree_version += 1;
 
-        // Simple tree root update (in production this would be proper SMT)
+        // Simple tree root update (in this would be proper SMT)
         let mut tree_root = state.tree_root.lock().unwrap();
         *tree_root = crate::canonical_spec::generate_node_hash(*tree_root, leaf_hash);
     }
@@ -509,7 +516,7 @@ async fn verify_transaction_on_blockchain(
 }
 
 /// Create UTXO from VERIFIED deposit event
-fn create_utxo_from_verified_deposit(deposit: &RealDepositEvent, _state: &AppState) -> Result<CanonicalUTXO> {
+fn create_utxo_from_verified_deposit(deposit: &BlockchainDepositEvent, _state: &AppState) -> Result<CanonicalUTXO> {
     let owner_commitment = derive_owner_commitment(deposit)?;
 
     let utxo = CanonicalUTXO::new_eth(
@@ -525,7 +532,7 @@ fn create_utxo_from_verified_deposit(deposit: &RealDepositEvent, _state: &AppSta
 }
 
 /// Derive privacy-preserving owner commitment
-fn derive_owner_commitment(deposit: &RealDepositEvent) -> Result<[u8; 32]> {
+fn derive_owner_commitment(deposit: &BlockchainDepositEvent) -> Result<[u8; 32]> {
     use sha3::{Keccak256, Digest};
 
     let mut hasher = Keccak256::new();

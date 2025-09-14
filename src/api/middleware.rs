@@ -7,7 +7,7 @@ use std::time::Duration;
 
 /// Create basic logging layer (simplified)
 pub fn create_logging_layer() -> tower::layer::util::Identity {
-    // Simplified logging - in production would use proper tracing
+    // Simplified logging - in would use proper tracing
     tower::layer::util::Identity::new()
 }
 

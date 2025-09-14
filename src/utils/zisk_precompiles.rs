@@ -121,7 +121,7 @@ pub fn zisk_verify_commitment(
 /// Ensures value is within valid range (0 to 2^64-1)
 /// Cost: 1,200 constraint units (BN254 operation)
 pub fn zisk_range_proof(value: u64) -> bool {
-    // Simple range check - in production, this would be a proper range proof
+    // Simple range check - in this would be a proper range proof
     // For now, just verify value is not zero and within reasonable bounds
     value > 0 && value <= 1_000_000_000 // Max 1 billion units
 }
@@ -200,7 +200,7 @@ pub fn zisk_verify_signature(message: &[u8], signature: &[u8; 64], public_key: &
     
     // Verify signature using BN254 curve operations
     // This implements a simplified signature verification
-    // In production, this would be a full RedJubjub verification
+    // In this would be a full RedJubjub verification
     
     // Check that R + s*G = H(m)*P where:
     // R = r_point, s = s_point, G = generator, H(m) = challenge, P = pk_point

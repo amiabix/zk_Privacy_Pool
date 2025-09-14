@@ -1,7 +1,7 @@
 //! Complete ETH to UTXO Test - Demonstrates the secure conversion flow
 
 use crate::utxo::converter::{ETHToUTXOConverter, CryptoUtils};
-use crate::relayer::{BlockchainConfig, AccountManager, RealWallet};
+use crate::relayer::{BlockchainConfig, AccountManager, Wallet};
 use web3::{Web3, transports::Http};
 use web3::types::{Address, U256, H256};
 use anyhow::Result;
@@ -202,7 +202,7 @@ async fn test_complete_eth_to_utxo_conversion() {
     println!("\n🎉 Complete Secure ETH to UTXO Conversion Test PASSED!");
     println!("{}", "=".repeat(60));
     println!("✅ Secure Implementation Features Verified:");
-    println!("   • Real blockchain integration");
+    println!("   • blockchain integration");
     println!("   • Cryptographically secure key generation");
     println!("   • Proper nullifier generation and tracking");
     println!("   • Secure commitment scheme");

@@ -5,7 +5,7 @@
 //! 
 //! Reference: https://github.com/tornadocash/tornado-core
 
-// Note: ZisK precompiles would be used in production
+// Note: ZisK precompiles would be used in
 // For now, we'll use standard cryptographic functions
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

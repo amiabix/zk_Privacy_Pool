@@ -1,4 +1,4 @@
-//! Real Blockchain Integration with Anvil
+//! Blockchain Integration with Anvil
 //! This module connects to the actual deployed contracts and processes real ETH deposits
 
 use web3::{
@@ -13,7 +13,7 @@ use secp256k1::{Secp256k1, SecretKey as Secp256k1SecretKey, PublicKey};
 use sha2::{Sha256, Digest};
 use web3::ethabi::{encode, Token};
 
-/// Real blockchain configuration
+/// blockchain configuration
 pub struct BlockchainConfig {
     pub anvil_url: String,
     pub privacy_pool_address: Address,
@@ -34,9 +34,9 @@ impl Default for BlockchainConfig {
     }
 }
 
-/// Real deposit event from the blockchain
+/// deposit event from the blockchain
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RealDepositEvent {
+pub struct DepositEvent {
     pub depositor: Address,
     pub commitment: H256,
     pub label: U256,
@@ -47,13 +47,13 @@ pub struct RealDepositEvent {
     pub log_index: u64,
 }
 
-/// Real blockchain client
-pub struct RealBlockchainClient {
+/// blockchain client
+pub struct BlockchainClient {
     pub web3: Web3<Http>,
     pub config: BlockchainConfig,
 }
 
-impl RealBlockchainClient {
+impl BlockchainClient {
     pub fn new(config: BlockchainConfig) -> Result<Self> {
         let transport = Http::new(&config.anvil_url)?;
         let web3 = Web3::new(transport);
@@ -113,11 +113,11 @@ impl RealBlockchainClient {
     }
 
     /// Fetch deposit events from the blockchain
-    pub async fn fetch_deposit_events(&self, from_block: u64, to_block: u64) -> Result<Vec<RealDepositEvent>> {
+    pub async fn fetch_deposit_events(&self, from_block: u64, to_block: u64) -> Result<Vec<DepositEvent>> {
         println!("🔍 Fetching real deposit events from block {} to {}", from_block, to_block);
         
         // For now, we'll simulate event fetching since the Filter API is complex
-        // In a production implementation, you would use proper event filtering
+        // In a implementation, you would use proper event filtering
         println!("   📝 Note: Event filtering needs proper implementation for production");
         
         // Return empty events for now - this would be replaced with actual event fetching
@@ -133,8 +133,8 @@ impl RealBlockchainClient {
         Ok(events)
     }
 
-    /// Parse a log into a RealDepositEvent
-    fn parse_deposit_event(&self, log: Log) -> Result<Option<RealDepositEvent>> {
+    /// Parse a log into a DepositEvent
+    fn parse_deposit_event(&self, log: Log) -> Result<Option<DepositEvent>> {
         // Check if this is a Deposited event
         // Event signature: Deposited(address indexed depositor, uint256 indexed commitment, uint256 indexed label, uint256 value, uint256 precommitmentHash)
         if log.topics.len() < 4 {
@@ -154,7 +154,7 @@ impl RealBlockchainClient {
         let value = U256::from_big_endian(&log.data.0[0..32]);
         let precommitment_hash = H256::from_slice(&log.data.0[32..64]);
 
-        let event = RealDepositEvent {
+        let event = DepositEvent {
             depositor,
             commitment,
             label,
@@ -191,9 +191,9 @@ impl RealBlockchainClient {
     }
 }
 
-/// Real wallet for testing with proper key management
+/// wallet for testing with proper key management
 #[derive(Debug, Clone)]
-pub struct RealWallet {
+pub struct Wallet {
     pub address: Address,
     pub private_key: [u8; 32],
     pub name: String,
@@ -215,7 +215,7 @@ impl AccountManager {
     }
 
     /// Create a wallet with proper key derivation
-    pub fn create_wallet(&self, name: &str, private_key: [u8; 32]) -> Result<RealWallet> {
+    pub fn create_wallet(&self, name: &str, private_key: [u8; 32]) -> Result<Wallet> {
         // Convert to secp256k1 secret key
         let secp_secret_key = Secp256k1SecretKey::from_slice(&private_key)
             .map_err(|e| anyhow!("Invalid private key: {}", e))?;
@@ -233,7 +233,7 @@ impl AccountManager {
         let secret_key = SecretKey::from_slice(&private_key)
             .map_err(|e| anyhow!("Failed to create secret key: {}", e))?;
         
-        Ok(RealWallet {
+        Ok(Wallet {
             address,
             private_key,
             name: name.to_string(),
@@ -242,7 +242,7 @@ impl AccountManager {
     }
 
     /// Create a wallet using Anvil's pre-funded accounts
-    pub fn create_anvil_wallet(&self, name: &str, account_index: usize) -> Result<RealWallet> {
+    pub fn create_anvil_wallet(&self, name: &str, account_index: usize) -> Result<Wallet> {
         // Anvil's pre-funded accounts (first 5 accounts) - Standard test keys
         let anvil_private_keys = [
             "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80", // Account 0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
@@ -265,7 +265,7 @@ impl AccountManager {
     }
 
     /// Fund a wallet from the Anvil faucet
-    pub async fn fund_wallet(&self, wallet: &RealWallet, amount_wei: U256) -> Result<H256> {
+    pub async fn fund_wallet(&self, wallet: &Wallet, amount_wei: U256) -> Result<H256> {
         // Use the default Anvil account to fund our test wallet
         let faucet_address = Address::from_str("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")?;
         
@@ -283,7 +283,7 @@ impl AccountManager {
     }
 
     /// Send a signed transaction
-    pub async fn send_signed_transaction(&self, wallet: &RealWallet, tx_params: TransactionParameters) -> Result<H256> {
+    pub async fn send_signed_transaction(&self, wallet: &Wallet, tx_params: TransactionParameters) -> Result<H256> {
         // Get the chain ID
         let chain_id = self.web3.eth().chain_id().await?;
         
@@ -313,7 +313,7 @@ impl AccountManager {
     }
 }
 
-impl RealWallet {
+impl Wallet {
     pub fn new(name: &str, private_key: [u8; 32]) -> Result<Self> {
         // Create a temporary account manager for key derivation
         let transport = Http::new("http://127.0.0.1:8545")?;
@@ -328,17 +328,17 @@ impl RealWallet {
     }
 }
 
-/// Real deposit manager that processes actual blockchain events
-pub struct RealDepositManager {
-    blockchain_client: RealBlockchainClient,
+/// deposit manager that processes actual blockchain events
+pub struct DepositManager {
+    blockchain_client: BlockchainClient,
     account_manager: AccountManager,
     last_processed_block: u64,
 }
 
-impl RealDepositManager {
+impl DepositManager {
     pub fn new() -> Result<Self> {
         let config = BlockchainConfig::default();
-        let blockchain_client = RealBlockchainClient::new(config)?;
+        let blockchain_client = BlockchainClient::new(config)?;
         let account_manager = AccountManager::new(blockchain_client.web3.clone());
         
         Ok(Self {
@@ -350,7 +350,7 @@ impl RealDepositManager {
 
     pub fn new_with_account_manager(account_manager: AccountManager) -> Result<Self> {
         let config = BlockchainConfig::default();
-        let blockchain_client = RealBlockchainClient::new(config)?;
+        let blockchain_client = BlockchainClient::new(config)?;
         
         Ok(Self {
             blockchain_client,
@@ -360,7 +360,7 @@ impl RealDepositManager {
     }
 
     /// Process real deposits from the blockchain
-    pub async fn process_real_deposits(&mut self) -> Result<Vec<RealDepositEvent>> {
+    pub async fn process_real_deposits(&mut self) -> Result<Vec<DepositEvent>> {
         let current_block = self.blockchain_client.get_current_block_number().await?;
         
         if current_block <= self.last_processed_block {
@@ -388,7 +388,7 @@ impl RealDepositManager {
     }
 
     /// Send real ETH deposit with proper signing
-    pub async fn send_real_deposit(&self, wallet: &RealWallet, value_wei: U256) -> Result<H256> {
+    pub async fn send_real_deposit(&self, wallet: &Wallet, value_wei: U256) -> Result<H256> {
         println!("💸 Sending {} ETH from {} to privacy pool...", 
                  value_wei.as_u64() as f64 / 1e18, wallet.name);
 
@@ -437,7 +437,7 @@ impl RealDepositManager {
     }
 
     /// Fund a wallet from the Anvil faucet
-    pub async fn fund_wallet(&self, wallet: &RealWallet, amount_wei: U256) -> Result<H256> {
+    pub async fn fund_wallet(&self, wallet: &Wallet, amount_wei: U256) -> Result<H256> {
         println!("💰 Funding {} with {} ETH...", wallet.name, amount_wei.as_u64() as f64 / 1e18);
         
         let tx_hash = self.account_manager.fund_wallet(wallet, amount_wei).await?;
@@ -459,7 +459,7 @@ mod tests {
     #[tokio::test]
     async fn test_real_blockchain_connection() {
         let config = BlockchainConfig::default();
-        let client = RealBlockchainClient::new(config).expect("Failed to create blockchain client");
+        let client = BlockchainClient::new(config).expect("Failed to create blockchain client");
         
         let current_block = client.get_current_block_number().await.expect("Failed to get block number");
         println!("✅ Connected to Anvil at block: {}", current_block);
@@ -472,13 +472,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_real_deposit_flow() {
-        let mut manager = RealDepositManager::new().expect("Failed to create deposit manager");
+        let mut manager = DepositManager::new().expect("Failed to create deposit manager");
         
         // Create test wallets
         let wallets = vec![
-            RealWallet::new("Alice", [0x01; 32]).expect("Failed to create Alice wallet"),
-            RealWallet::new("Bob", [0x02; 32]).expect("Failed to create Bob wallet"),
-            RealWallet::new("Charlie", [0x03; 32]).expect("Failed to create Charlie wallet"),
+            Wallet::new("Alice", [0x01; 32]).expect("Failed to create Alice wallet"),
+            Wallet::new("Bob", [0x02; 32]).expect("Failed to create Bob wallet"),
+            Wallet::new("Charlie", [0x03; 32]).expect("Failed to create Charlie wallet"),
         ];
 
         println!("🚀 Starting real deposit flow test...");

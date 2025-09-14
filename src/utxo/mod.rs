@@ -17,4 +17,4 @@ pub use transaction::{TransactionResult, Error, MerkleProof};
 pub use indexing::{UTXOIndex, IndexedUTXO, UTXOId, UTXOQueryBuilder};
 pub use converter::{ETHToUTXOConverter, SecureCommitment, Nullifier, CryptoUtils};
 pub use eth_deposit_handler::{ETHDepositHandler, ETHDepositEvent, DepositProof, DepositError};
-pub use crate::relayer::RealDepositEvent;
+pub use crate::relayer::DepositEvent;

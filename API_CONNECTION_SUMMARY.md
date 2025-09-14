@@ -96,7 +96,7 @@ curl http://localhost:8080/api/balance/0x1234...
 ### 🔧 **TECHNICAL DETAILS:**
 - **Backend**: Rust + Axum + Tokio
 - **Frontend**: React + Vite + Ethers.js
-- **Storage**: In-memory HashMap (production-ready for demo)
+- **Storage**: In-memory HashMap (ready for demo)
 - **CORS**: Enabled for cross-origin requests
 - **Error Handling**: Comprehensive error responses
 - **Logging**: Structured logging with timestamps
@@ -106,7 +106,7 @@ curl http://localhost:8080/api/balance/0x1234...
 The current implementation provides a solid foundation that can be enhanced with:
 
 1. **Database Integration** - Replace in-memory storage with RocksDB
-2. **Real Merkle Trees** - Implement Sparse Merkle Trees (SMT)
+2. ** Merkle Trees** - Implement Sparse Merkle Trees (SMT)
 3. **ZK Proof Integration** - Connect to actual ZK proof generation
 4. **Authentication** - Add user authentication and authorization
 5. **WebSocket Support** - Real-time updates via WebSocket

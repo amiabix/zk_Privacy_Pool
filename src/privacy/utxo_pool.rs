@@ -132,7 +132,7 @@ impl UTXOPrivacyPool {
         // Add commitment to Merkle tree
         self.merkle_tree.push(utxo.address);
         
-        // In production, this would update the actual Merkle tree
+        // In this would update the actual Merkle tree
         // and submit the new root to the smart contract
     }
 
@@ -256,7 +256,7 @@ impl UTXOPrivacyPool {
     /// Generate Merkle proof for UTXO
     fn generate_merkle_proof(&self, _utxo_id: UTXOId) -> MerkleProof {
         // Simplified Merkle proof generation
-        // In production, this would generate the actual Merkle proof
+        // In this would generate the actual Merkle proof
         MerkleProof {
             leaf: [0u8; 32],
             path: vec![[0u8; 32]; 32],

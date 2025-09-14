@@ -230,7 +230,7 @@ impl UTXOTransaction {
     /// Verify transaction signature
     pub fn verify_signature(&self) -> bool {
         // Simplified signature verification
-        // In production, this would use proper cryptographic verification
+        // In this would use proper cryptographic verification
         !self.signature.is_empty() && self.signature.len() == 64
     }
 

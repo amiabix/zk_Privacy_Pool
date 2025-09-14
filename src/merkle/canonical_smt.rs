@@ -205,7 +205,7 @@ impl CanonicalSMT {
         }
 
         // Try to find actual node hash by computing what it would be
-        // This is a simplified version - in production you'd have more sophisticated tracking
+        // This is a simplified version - in you'd have more sophisticated tracking
         
         // For now, if we can't find it and it's not empty, assume it's empty
         // This will be improved when we add proper node tracking

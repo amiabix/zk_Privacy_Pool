@@ -29,7 +29,7 @@ async function main() {
         const account = accounts[i];
         const wallet = new ethers.Wallet(account.privateKey, ethers.provider);
         
-        // Generate a commitment (simplified - in production this would be a proper hash)
+        // Generate a commitment (simplified - in this would be a proper hash)
         const commitment = ethers.keccak256(ethers.toUtf8Bytes(`commitment_${i}_${Date.now()}`));
         const depositAmount = ethers.parseEther("1"); // 1 ETH deposit
         

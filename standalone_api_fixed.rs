@@ -247,7 +247,7 @@ async fn process_verified_deposit(request: DepositRequest) -> Result<DepositResp
 
     println!("🎉 VERIFIED UTXO CREATED!");
     println!("   UTXO ID: {}", utxo.utxo_id);
-    println!("   Real Value: {} ETH", blockchain_data.value_eth);
+    println!("   Value: {} ETH", blockchain_data.value_eth);
     println!("   Verified: {}", utxo.verified_on_blockchain);
 
     // STEP 3: Return success response

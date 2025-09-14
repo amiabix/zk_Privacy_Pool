@@ -1,32 +1,22 @@
-pub mod privacy_pool;
-pub mod transaction;
-pub mod merkle_tree;
-pub mod utxo;
-pub mod utxo_indexing;
-pub mod enhanced_utxo_system;
-pub mod eth_deposit_handler;
-pub mod utxo_privacy_pool;
-pub mod relayer;
-pub mod integration_test;
-pub mod integration_test_full;
-pub mod relayer_integration_test;
-pub mod wallet_deposit_test;
-pub mod real_blockchain_integration;
-pub mod simple_anvil_test;
-pub mod eth_to_utxo_converter;
-pub mod complete_eth_to_utxo_test;
-pub mod tree_inspector;
-pub mod enhanced_merkle_tree;
-pub mod hash_utils;
-pub mod zk_privacy_proofs;
-pub mod zisk_precompiles;
+// Core modules
+// pub mod integration_test; // Removed - file not found
+// pub mod integration_test_full; // Removed - file not found
 
-pub use privacy_pool::{PrivacyPool, PoolStats};
-pub use utxo::{UTXO, UTXOTransaction, User, UTXOInput, UTXOOutput, TransactionType, MerkleProof};
-pub use utxo_indexing::{UTXOIndex, IndexedUTXO, UTXOId, UTXOQueryBuilder};
-pub use enhanced_utxo_system::{EnhancedUTXOSystem, UTXOSystemStats};
-pub use eth_deposit_handler::{ETHDepositHandler, ETHDepositEvent, DepositProof, DepositError};
-pub use utxo_privacy_pool::{UTXOPrivacyPool, SpendingProof, MerkleProof as UTXOMerkleProof, DepositError as UTXODepositError, SpendingError, WithdrawalError};
-pub use relayer::{RelayerService, DepositResult, TreeStats, RelayerError};
-pub use transaction::{TransactionResult, Error};
-pub use zisk_precompiles::*;
+// New canonical implementation modules
+pub mod canonical_spec;
+pub mod database;
+
+// Organized modules
+pub mod utxo;
+pub mod merkle;
+pub mod privacy;
+pub mod relayer;
+pub mod utils;
+pub mod api;
+
+// Re-export main types for easy access
+pub use privacy::{PrivacyPool, PoolStats, UTXOPrivacyPool, ETHDepositEvent};
+pub use utxo::{UTXO, UTXOTransaction, User, UTXOInput, UTXOOutput, TransactionType, UTXOIndex, IndexedUTXO, UTXOId, UTXOQueryBuilder, ETHToUTXOConverter, SecureCommitment, Nullifier, CryptoUtils, TransactionResult, Error, MerkleProof};
+pub use merkle::{EnhancedMerkleTree, RelayerService, RelayerConfig};
+pub use utils::{sha256, keccak256, hash_pair, hash_multiple, zisk_sha256, zisk_keccak256, zisk_hash_pair, zisk_bn254_add, zisk_bn254_double, zisk_pedersen_commitment, zisk_generate_nullifier, zisk_verify_nullifier};
+pub use relayer::{BlockchainConfig, RealDepositEvent, RealBlockchainClient, RealWallet, AccountManager, RealDepositManager};

@@ -8,6 +8,7 @@
     "test": "hardhat test",
     "deploy": "hardhat run scripts/deploy.js",
     "deploy:anvil": "hardhat run scripts/deploy.js --network anvil",
+    "deploy:sepolia": "hardhat run scripts/deploy-sepolia.js --network sepolia",
     "node": "anvil",
     "verify": "hardhat verify"
   },
@@ -17,8 +18,23 @@
     "hardhat": "^2.19.0"
   },
   "dependencies": {
-    "circomlib": "^0.1.0",
+    "@openzeppelin/contracts": "^5.4.0",
+    "circom": "^0.5.46",
+    "circomlib": "^0.1.2",
     "maci-circuits": "^0.1.0",
-    "poseidon": "^0.1.0"
-  }
+    "poseidon": "^0.1.0",
+    "snarkjs": "^0.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amiabix/zk_Privacy_Pool.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/amiabix/zk_Privacy_Pool/issues"
+  },
+  "homepage": "https://github.com/amiabix/zk_Privacy_Pool#readme"
 }

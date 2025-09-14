@@ -1,0 +1,16 @@
+{
+  "contractAddress": "0x19B8743Df3E8997489b50F455a1cAe3536C0ee31",
+  "deployerAddress": "0x6a685bF2E7C92a51b8B0fBadE91Cda085E304B46",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "timestamp": "2025-01-27T00:00:00.000Z",
+  "contractName": "PrivacyPoolFixed",
+  "functions": {
+    "deposit": "depositAuto() - for simple deposits",
+    "depositWithCommitment": "depositWithCommitment(bytes32) - for custom commitments",
+    "withdraw": "withdraw(bytes32,address,uint256) - for withdrawals", 
+    "getBalance": "getContractBalance() - for total balance",
+    "getUserBalance": "getUserBalance(address) - for user balance"
+  },
+  "merkleRoot": "0x04735efbce809c030d37ba49c991137ee9bae0681dd865766a2c50dd1c301282"
+}

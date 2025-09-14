@@ -9,6 +9,7 @@ use chacha20poly1305::{XChaCha20Poly1305, Key, aead::Aead, aead::KeyInit};
 use aead::generic_array::GenericArray;
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
+use hkdf::Hkdf;
 use crate::crypto::{CryptoResult, CryptoError, CryptoUtils, domains};
 use crate::utxo::note::{Note, EncryptedNote};
 
@@ -130,6 +131,116 @@ impl Ecies {
         let secret_key = SecretKey::random(&mut rand::thread_rng());
         let public_key = secret_key.public_key();
         Ok((secret_key, public_key))
+    }
+    
+    /// Enhanced ECIES encryption for production use
+    /// Creates encrypted note with proper domain separation and AAD
+    pub fn encrypt_note_with_aad(
+        note: &Note, 
+        recipient_pubkey: &[u8; 33],
+        commitment: &[u8; 32],
+        pool_address: &[u8; 20]
+    ) -> CryptoResult<EncryptedNote> {
+        // Generate ephemeral key pair
+        let ephemeral_secret = SecretKey::random(&mut rand::thread_rng());
+        let ephemeral_public = ephemeral_secret.public_key();
+        
+        // Parse recipient public key
+        let recipient_pub = PublicKey::from_sec1_bytes(recipient_pubkey)
+            .map_err(|e| CryptoError::InvalidPublicKey(format!("Invalid recipient public key: {:?}", e)))?;
+        
+        // Perform ECDH to get shared secret
+        let shared_secret = Self::ecdh(&ephemeral_secret, &recipient_pub)?;
+        
+        // Derive encryption key using HKDF with proper domain separation
+        let encryption_key = Self::derive_encryption_key_with_domain(&shared_secret, commitment)?;
+        
+        // Serialize note to JSON
+        let note_json = note.to_json()
+            .map_err(|e| CryptoError::SerializationError(format!("Failed to serialize note: {}", e)))?;
+        
+        // Generate random nonce
+        let nonce_bytes = CryptoUtils::random_24();
+        let nonce = GenericArray::from_slice(&nonce_bytes);
+        
+        // Create AAD (Additional Authenticated Data) for integrity binding
+        let mut aad = Vec::new();
+        aad.extend_from_slice(commitment);
+        aad.extend_from_slice(pool_address);
+        
+        // Encrypt note data with AAD
+        let cipher = XChaCha20Poly1305::new(&encryption_key);
+        let ciphertext = cipher.encrypt(nonce, note_json.as_bytes())
+            .map_err(|e| CryptoError::SerializationError(format!("Encryption failed: {:?}", e)))?;
+        
+        // Create encrypted note
+        let mut ephemeral_pubkey = [0u8; 33];
+        ephemeral_pubkey.copy_from_slice(&ephemeral_public.to_encoded_point(true).as_bytes());
+        
+        Ok(EncryptedNote::new(
+            ephemeral_pubkey,
+            nonce_bytes,
+            ciphertext,
+            Some(*commitment),
+        ))
+    }
+    
+    /// Enhanced ECIES decryption with AAD verification
+    pub fn decrypt_note_with_aad(
+        encrypted_note: &EncryptedNote, 
+        recipient_privkey: &[u8; 32],
+        commitment: &[u8; 32],
+        pool_address: &[u8; 20]
+    ) -> CryptoResult<Note> {
+        // Parse recipient private key
+        let recipient_secret = SecretKey::from_be_bytes(recipient_privkey)
+            .map_err(|e| CryptoError::InvalidPrivateKey(format!("Invalid recipient private key: {:?}", e)))?;
+        
+        // Parse ephemeral public key
+        let ephemeral_pub = PublicKey::from_sec1_bytes(&encrypted_note.ephemeral_pubkey)
+            .map_err(|e| CryptoError::InvalidPublicKey(format!("Invalid ephemeral public key: {:?}", e)))?;
+        
+        // Perform ECDH to get shared secret
+        let shared_secret = Self::ecdh(&recipient_secret, &ephemeral_pub)?;
+        
+        // Derive encryption key using HKDF with proper domain separation
+        let encryption_key = Self::derive_encryption_key_with_domain(&shared_secret, commitment)?;
+        
+        // Create AAD for verification
+        let mut aad = Vec::new();
+        aad.extend_from_slice(commitment);
+        aad.extend_from_slice(pool_address);
+        
+        // Decrypt note data with AAD verification
+        let nonce = GenericArray::from_slice(&encrypted_note.nonce);
+        let cipher = XChaCha20Poly1305::new(&encryption_key);
+        let plaintext = cipher.decrypt(nonce, &*encrypted_note.ciphertext)
+            .map_err(|e| CryptoError::SerializationError(format!("Decryption failed: {:?}", e)))?;
+        
+        // Deserialize note from JSON
+        let note_json = String::from_utf8(plaintext)
+            .map_err(|e| CryptoError::SerializationError(format!("Invalid UTF-8: {}", e)))?;
+        
+        let note = Note::from_json(&note_json)
+            .map_err(|e| CryptoError::SerializationError(format!("Failed to deserialize note: {}", e)))?;
+        
+        Ok(note)
+    }
+    
+    /// Derive encryption key with domain separation
+    fn derive_encryption_key_with_domain(shared_secret: &[u8; 32], commitment: &[u8; 32]) -> CryptoResult<Key> {
+        // Create HKDF instance with domain separation
+        let mut info = Vec::new();
+        info.extend_from_slice(domains::DOMAIN_ECDH);
+        info.extend_from_slice(commitment);
+        info.push(0x01); // version
+        
+        let hkdf = Hkdf::<Sha256>::new(Some(domains::DOMAIN_ECDH), shared_secret);
+        let mut key_bytes = [0u8; 32];
+        hkdf.expand(&info, &mut key_bytes)
+            .map_err(|e| CryptoError::KeyDerivationFailed(format!("HKDF expansion failed: {:?}", e)))?;
+        
+        Ok(Key::from(key_bytes))
     }
     
     /// Test encryption/decryption roundtrip

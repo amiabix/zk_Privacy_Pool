@@ -21,6 +21,7 @@ pub mod nullifiers;
 pub mod poseidon;
 pub mod bn254;
 pub mod ecies;
+pub mod architecture_compliance;
 
 // Re-export main types
 pub use signatures::*;
@@ -31,6 +32,7 @@ pub use nullifiers::*;
 pub use poseidon::*;
 pub use bn254::*;
 pub use ecies::*;
+pub use architecture_compliance::*;
 
 /// Cryptographic error types
 #[derive(Debug, thiserror::Error)]
@@ -117,18 +119,25 @@ impl CryptoContext {
 }
 
 /// Domain constants for cryptographic operations
+/// These match the exact specification in architecture.md
 pub mod domains {
-    /// Domain separator for nullifier generation
-    pub const DOMAIN_NULL: &[u8] = b"privacy-pool-nullifier";
-    
-    /// Domain separator for commitment generation
-    pub const DOMAIN_COMMIT: &[u8] = b"privacy-pool-commitment";
-    
-    /// Domain separator for note encryption
-    pub const DOMAIN_NOTE: &[u8] = b"privacy-pool-note";
-    
-    /// Domain separator for ECDH key derivation
-    pub const DOMAIN_ECDH: &[u8] = b"privacy-pool-ecdh";
+    /// Domain separator for commitment generation (V1)
+    pub const DOMAIN_COMMIT_V1: &[u8] = b"PRIVPOOL_COMMIT_V1";
+
+    /// Domain separator for nullifier generation (V1)
+    pub const DOMAIN_NULL_V1: &[u8] = b"PRIVPOOL_NULL_V1";
+
+    /// Domain separator for note ID generation (V1)
+    pub const DOMAIN_NOTE_V1: &[u8] = b"PRIVPOOL_NOTE_V1";
+
+    /// Domain separator for ECIES encryption (V1)
+    pub const DOMAIN_ECIES_V1: &[u8] = b"PRIVPOOL_ECIES_V1";
+
+    // Backward compatibility constants
+    pub const DOMAIN_COMMIT: &[u8] = DOMAIN_COMMIT_V1;
+    pub const DOMAIN_NULL: &[u8] = DOMAIN_NULL_V1;
+    pub const DOMAIN_NOTE: &[u8] = DOMAIN_NOTE_V1;
+    pub const DOMAIN_ECDH: &[u8] = DOMAIN_ECIES_V1;
 }
 
 /// Cryptographic utilities

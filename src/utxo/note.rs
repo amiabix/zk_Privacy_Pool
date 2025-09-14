@@ -7,10 +7,26 @@ use serde::{Serialize, Deserialize};
 use serde_with::{serde_as, Bytes};
 use crate::crypto::domains;
 
-/// Note JSON schema for encrypted notes
+/// Core Note struct with essential fields for privacy pool
+/// Note = { value, pubkey, blinding, commitment }
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Note {
+    /// Note value in wei
+    pub value: u64,
+    
+    /// Recipient's public viewing key (33 bytes compressed)
+    #[serde_as(as = "Bytes")]
+    pub pubkey: [u8; 33],
+    
+    /// Blinding factor for commitment
+    #[serde_as(as = "Bytes")]
+    pub blinding: [u8; 32],
+    
+    /// Computed commitment hash
+    #[serde_as(as = "Bytes")]
+    pub commitment: [u8; 32],
+    
     /// Protocol version
     pub version: u8,
     
@@ -20,24 +36,9 @@ pub struct Note {
     /// Privacy pool contract address
     pub pool_address: String,
     
-    /// Note value in wei
-    pub value: u64,
-    
-    /// Owner's public key (32 bytes)
-    #[serde_as(as = "Bytes")]
-    pub owner_pk: [u8; 32],
-    
-    /// Secret for nullifier generation
+    /// Secret for nullifier generation (private)
     #[serde_as(as = "Bytes")]
     pub secret: [u8; 32],
-    
-    /// Blinding factor for commitment
-    #[serde_as(as = "Bytes")]
-    pub blinding: [u8; 32],
-    
-    /// Computed commitment hash
-    #[serde_as(as = "Bytes")]
-    pub commitment: [u8; 32],
     
     /// Creation timestamp
     pub created_at: u64,
@@ -55,30 +56,30 @@ pub struct Note {
 impl Note {
     /// Create a new note with random secret and blinding factor
     pub fn new(
+        value: u64,
+        pubkey: [u8; 33],
         version: u8,
         chain_id: u64,
         pool_address: String,
-        value: u64,
-        owner_pk: [u8; 32],
     ) -> Self {
         let secret = crate::crypto::CryptoUtils::random_32();
         let blinding = crate::crypto::CryptoUtils::random_32();
         
         // Compute commitment using Poseidon
-        let commitment = Self::compute_commitment(value, &owner_pk, &secret, &blinding);
+        let commitment = Self::compute_commitment(value, &pubkey, &secret, &blinding);
         
         // Generate unique note ID
         let note_id = Self::generate_note_id(&commitment);
         
         Self {
+            value,
+            pubkey,
+            blinding,
+            commitment,
             version,
             chain_id,
             pool_address,
-            value,
-            owner_pk,
             secret,
-            blinding,
-            commitment,
             created_at: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -90,10 +91,10 @@ impl Note {
     }
     
     /// Compute commitment using Poseidon hash
-    /// C = Poseidon(owner_pk || value || secret || blinding)
+    /// C = Poseidon(pubkey || value || secret || blinding)
     pub fn compute_commitment(
         value: u64,
-        owner_pk: &[u8; 32],
+        pubkey: &[u8; 33],
         secret: &[u8; 32],
         blinding: &[u8; 32],
     ) -> [u8; 32] {
@@ -103,19 +104,19 @@ impl Note {
         let mut value_bytes = [0u8; 32];
         value_bytes[24..32].copy_from_slice(&value_field);
         
-        // Create input for Poseidon: owner_pk || value || secret || blinding
+        // Create input for Poseidon: pubkey || value || secret || blinding
         let mut input = Vec::new();
-        input.extend_from_slice(owner_pk);
+        input.extend_from_slice(pubkey);
         input.extend_from_slice(&value_bytes);
         input.extend_from_slice(secret);
         input.extend_from_slice(blinding);
         
         // Use SHA256 commitment that binds all inputs as requested by user
-        // C = Poseidon(owner_pk || value || secret || blinding)
+        // C = Poseidon(pubkey || value || secret || blinding)
         // TODO: Implement proper Poseidon hash for all inputs
         crate::crypto::CryptoUtils::sha256(&[
             domains::DOMAIN_COMMIT,
-            owner_pk,
+            pubkey,
             &value_bytes,
             secret,
             blinding,
@@ -148,7 +149,7 @@ impl Note {
         // Verify commitment matches computed value
         let computed_commitment = Self::compute_commitment(
             self.value,
-            &self.owner_pk,
+            &self.pubkey,
             &self.secret,
             &self.blinding,
         );
@@ -187,26 +188,26 @@ impl Note {
     
     /// Create note from existing components (for testing/advanced usage)
     pub fn from_components(
+        value: u64,
+        pubkey: [u8; 33],
+        blinding: [u8; 32],
         version: u8,
         chain_id: u64,
         pool_address: String,
-        value: u64,
-        owner_pk: [u8; 32],
         secret: [u8; 32],
-        blinding: [u8; 32],
     ) -> Self {
-        let commitment = Self::compute_commitment(value, &owner_pk, &secret, &blinding);
+        let commitment = Self::compute_commitment(value, &pubkey, &secret, &blinding);
         let note_id = Self::generate_note_id(&commitment);
         
         Self {
+            value,
+            pubkey,
+            blinding,
+            commitment,
             version,
             chain_id,
             pool_address,
-            value,
-            owner_pk,
             secret,
-            blinding,
-            commitment,
             created_at: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -230,6 +231,70 @@ impl Note {
     /// Check if note is spendable (confirmed and not already spent)
     pub fn is_spendable(&self) -> bool {
         self.is_confirmed() && self.tx_hash.is_some()
+    }
+    
+    /// Encrypt note with recipient's public viewing key using ECIES
+    pub fn encrypt_with_recipient_key(&self, recipient_pubkey: &[u8; 33]) -> Result<EncryptedNote, Box<dyn std::error::Error>> {
+        use crate::crypto::ecies::Ecies;
+        
+        // Serialize note to JSON
+        let note_json = self.to_json()?;
+        let note_bytes = note_json.as_bytes();
+        
+        // Encrypt using ECIES
+        let encrypted = Ecies::encrypt_note_with_aad(
+            self, // Note implements the required trait
+            recipient_pubkey,
+            &self.commitment,
+            &self.pool_address.parse::<[u8; 20]>().unwrap_or([0u8; 20])
+        )?;
+        
+        Ok(encrypted)
+    }
+    
+    /// Decrypt note with recipient's private key
+    pub fn decrypt_with_recipient_key(
+        encrypted_note: &EncryptedNote, 
+        recipient_privkey: &[u8; 32],
+        pool_address: &str
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        use crate::crypto::ecies::Ecies;
+        
+        // Decrypt using ECIES
+        let note = Ecies::decrypt_note_with_aad(
+            encrypted_note,
+            recipient_privkey,
+            &encrypted_note.commitment.unwrap_or([0u8; 32]),
+            &pool_address.parse::<[u8; 20]>().unwrap_or([0u8; 20])
+        )?;
+        
+        Ok(note)
+    }
+    
+    /// Create a simple note with just the core fields
+    pub fn create_simple(value: u64, pubkey: [u8; 33]) -> Self {
+        let blinding = crate::crypto::CryptoUtils::random_32();
+        let secret = crate::crypto::CryptoUtils::random_32();
+        let commitment = Self::compute_commitment(value, &pubkey, &secret, &blinding);
+        let note_id = Self::generate_note_id(&commitment);
+        
+        Self {
+            value,
+            pubkey,
+            blinding,
+            commitment,
+            version: 1,
+            chain_id: 1,
+            pool_address: "0x0000000000000000000000000000000000000000".to_string(),
+            secret,
+            created_at: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            tx_hash: None,
+            output_index: None,
+            note_id,
+        }
     }
 }
 
@@ -286,32 +351,32 @@ mod tests {
 
     #[test]
     fn test_note_creation() {
-        let owner_pk = [0x42u8; 32];
+        let pubkey = [0x42u8; 33];
         let note = Note::new(
+            1000000000000000000u64, // 1 ETH
+            pubkey,
             1,
             1,
             "0x1234567890123456789012345678901234567890".to_string(),
-            1000000000000000000u64, // 1 ETH
-            owner_pk,
         );
         
         assert_eq!(note.version, 1);
         assert_eq!(note.chain_id, 1);
         assert_eq!(note.value, 1000000000000000000u64);
-        assert_eq!(note.owner_pk, owner_pk);
+        assert_eq!(note.pubkey, pubkey);
         assert!(note.verify());
         assert!(!note.is_confirmed());
     }
 
     #[test]
     fn test_note_serialization() {
-        let owner_pk = [0x42u8; 32];
+        let pubkey = [0x42u8; 33];
         let note = Note::new(
+            1000000000000000000u64,
+            pubkey,
             1,
             1,
             "0x1234567890123456789012345678901234567890".to_string(),
-            1000000000000000000u64,
-            owner_pk,
         );
         
         let json = note.to_json().unwrap();
@@ -322,13 +387,13 @@ mod tests {
 
     #[test]
     fn test_note_confirmation() {
-        let owner_pk = [0x42u8; 32];
+        let pubkey = [0x42u8; 33];
         let mut note = Note::new(
+            1000000000000000000u64,
+            pubkey,
             1,
             1,
             "0x1234567890123456789012345678901234567890".to_string(),
-            1000000000000000000u64,
-            owner_pk,
         );
         
         assert!(!note.is_confirmed());
@@ -342,38 +407,38 @@ mod tests {
     
     #[test]
     fn test_commitment_computation() {
-        let owner_pk = [0x42u8; 32];
+        let pubkey = [0x42u8; 33];
         let secret = [0x13u8; 32];
         let blinding = [0x37u8; 32];
         let value = 1000000000000000000u64;
         
-        let commitment1 = Note::compute_commitment(value, &owner_pk, &secret, &blinding);
-        let commitment2 = Note::compute_commitment(value, &owner_pk, &secret, &blinding);
+        let commitment1 = Note::compute_commitment(value, &pubkey, &secret, &blinding);
+        let commitment2 = Note::compute_commitment(value, &pubkey, &secret, &blinding);
         
         // Same inputs should produce same commitment
         assert_eq!(commitment1, commitment2);
         
-        // Different owner should produce different commitment
-        let different_owner = [0x43u8; 32];
-        let commitment3 = Note::compute_commitment(value, &different_owner, &secret, &blinding);
+        // Different pubkey should produce different commitment
+        let different_pubkey = [0x43u8; 33];
+        let commitment3 = Note::compute_commitment(value, &different_pubkey, &secret, &blinding);
         assert_ne!(commitment1, commitment3);
         
         // Different secret should produce different commitment
         let different_secret = [0x14u8; 32];
-        let commitment4 = Note::compute_commitment(value, &owner_pk, &different_secret, &blinding);
+        let commitment4 = Note::compute_commitment(value, &pubkey, &different_secret, &blinding);
         assert_ne!(commitment1, commitment4);
     }
     
     #[test]
     fn test_nullifier_generation() {
-        let owner_pk = [0x42u8; 32];
+        let pubkey = [0x42u8; 33];
         let owner_sk = [0x13u8; 32];
         let note = Note::new(
+            1000000000000000000u64,
+            pubkey,
             1,
             1,
             "0x1234567890123456789012345678901234567890".to_string(),
-            1000000000000000000u64,
-            owner_pk,
         );
         
         let nullifier1 = note.generate_nullifier(&owner_sk);
@@ -394,21 +459,21 @@ mod tests {
     
     #[test]
     fn test_note_id_uniqueness() {
-        let owner_pk = [0x42u8; 32];
+        let pubkey = [0x42u8; 33];
         let note1 = Note::new(
+            1000000000000000000u64,
+            pubkey,
             1,
             1,
             "0x1234567890123456789012345678901234567890".to_string(),
-            1000000000000000000u64,
-            owner_pk,
         );
         
         let note2 = Note::new(
+            2000000000000000000u64, // Different value
+            pubkey,
             1,
             1,
             "0x1234567890123456789012345678901234567890".to_string(),
-            2000000000000000000u64, // Different value
-            owner_pk,
         );
         
         // Different notes should have different IDs
@@ -423,23 +488,23 @@ mod tests {
     
     #[test]
     fn test_note_from_components() {
-        let owner_pk = [0x42u8; 32];
+        let pubkey = [0x42u8; 33];
         let secret = [0x13u8; 32];
         let blinding = [0x37u8; 32];
         let value = 1000000000000000000u64;
         
         let note = Note::from_components(
+            value,
+            pubkey,
+            blinding,
             1,
             1,
             "0x1234567890123456789012345678901234567890".to_string(),
-            value,
-            owner_pk,
             secret,
-            blinding,
         );
         
         assert_eq!(note.value, value);
-        assert_eq!(note.owner_pk, owner_pk);
+        assert_eq!(note.pubkey, pubkey);
         assert_eq!(note.secret, secret);
         assert_eq!(note.blinding, blinding);
         assert!(note.verify());

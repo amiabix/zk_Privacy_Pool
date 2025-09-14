@@ -1,40 +1,41 @@
 {
   "name": "privacy-pool-zkvm",
   "version": "1.0.0",
-  "description": "Privacy Pool implementation with ZisK zkVM integration",
+  "description": "Production-grade Privacy Pool with ZKVM integration",
   "main": "index.js",
   "scripts": {
-    "compile": "hardhat compile",
-    "test": "hardhat test",
-    "deploy": "hardhat run scripts/deploy.js",
-    "deploy:anvil": "hardhat run scripts/deploy.js --network anvil",
-    "deploy:sepolia": "hardhat run scripts/deploy-sepolia.js --network sepolia",
-    "node": "anvil",
-    "verify": "hardhat verify"
+    "deploy": "npx hardhat run src/scripts/deploy_privacy_pool.js --network localhost",
+    "deploy:mainnet": "npx hardhat run src/scripts/deploy_privacy_pool.js --network mainnet",
+    "test": "npx hardhat test",
+    "test:integration": "npx hardhat run src/scripts/integration_test.js --network localhost",
+    "wallet:deposit": "npx ts-node src/scripts/wallet_create_note.ts",
+    "compile": "npx hardhat compile",
+    "clean": "npx hardhat clean",
+    "node": "npx hardhat node",
+    "coverage": "npx hardhat coverage"
   },
+  "keywords": [
+    "privacy",
+    "zkvm",
+    "utxo",
+    "merkle-tree",
+    "zero-knowledge",
+    "ethereum"
+  ],
+  "author": "Privacy Pool Team",
+  "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "circomkit": "^0.1.0",
-    "hardhat": "^2.19.0"
+    "@types/node": "^20.0.0",
+    "hardhat": "^2.19.0",
+    "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.4.0",
-    "circom": "^0.5.46",
-    "circomlib": "^0.1.2",
-    "maci-circuits": "^0.1.0",
-    "poseidon": "^0.1.0",
-    "snarkjs": "^0.7.0"
+    "axios": "^1.6.0",
+    "ethers": "^5.7.0",
+    "poseidon-lite": "^1.0.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/amiabix/zk_Privacy_Pool.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/amiabix/zk_Privacy_Pool/issues"
-  },
-  "homepage": "https://github.com/amiabix/zk_Privacy_Pool#readme"
+  "engines": {
+    "node": ">=16.0.0"
+  }
 }

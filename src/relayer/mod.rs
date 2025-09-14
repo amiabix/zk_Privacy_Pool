@@ -6,6 +6,7 @@ pub mod blockchain_integration;
 pub mod wallet_deposit_test;
 pub mod encrypted_notes;
 pub mod encrypted_notes_integration_test;
+pub mod deposit_watcher;
 
 // Re-export main types
 pub use data_service::{DataService, DepositEvent};

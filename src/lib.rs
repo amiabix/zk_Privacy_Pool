@@ -18,6 +18,6 @@ pub mod crypto;
 // Re-export main types for easy access
 pub use privacy::{PrivacyPool, PoolStats, UTXOPrivacyPool, ETHDepositEvent};
 pub use utxo::{UTXO, UTXOTransaction, User, UTXOInput, UTXOOutput, TransactionType, UTXOIndex, IndexedUTXO, UTXOId, UTXOQueryBuilder, ETHToUTXOConverter, SecureCommitment, Nullifier, CryptoUtils, TransactionResult, Error, MerkleProof};
-pub use merkle::{EnhancedMerkleTree, RelayerService, RelayerConfig};
+pub use merkle::{EnhancedMerkleTree, TreeStats};
 pub use utils::{sha256, keccak256, hash_pair, hash_multiple, zisk_sha256, zisk_keccak256, zisk_hash_pair, zisk_bn254_add, zisk_bn254_double, zisk_pedersen_commitment, zisk_generate_nullifier, zisk_verify_nullifier};
 pub use relayer::{BlockchainConfig, DepositEvent, BlockchainClient, Wallet, AccountManager, DepositManager};

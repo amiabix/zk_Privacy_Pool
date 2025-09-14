@@ -12,19 +12,22 @@ module.exports = {
     }
   },
   networks: {
-    hardhat: {
-      chainId: 1337
-    },
-    anvil: {
+    localhost: {
       url: "http://127.0.0.1:8545",
       chainId: 31337
     },
+    hardhat: {
+      chainId: 31337
+    },
     sepolia: {
-      url: "https://eth-sepolia.g.alchemy.com/v2/wdp1FpAvY5GBD-wstEpHlsIY37WcgKgI",
-      chainId: 11155111,
-      accounts: [
-        "a137d7ce72b485fd8a3e7a08ca2ca13068724e08ed8864fdf03808aa169ce80b"
-      ]
+      url: process.env.SEPOLIA_RPC_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 11155111
+    },
+    mainnet: {
+      url: process.env.MAINNET_RPC_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 1
     }
   },
   paths: {
@@ -32,5 +35,8 @@ module.exports = {
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts"
+  },
+  mocha: {
+    timeout: 40000
   }
 };
